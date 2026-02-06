@@ -1,0 +1,44 @@
+
+thread 'main' (2194459) panicked at src/pty.rs:120:37:
+Failed to exec: ENOENT
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'main' (2194459) panicked at /Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.49.0/src/runtime/io/driver.rs:260:27:
+failed to wake I/O driver: Os { code: 9, kind: Uncategorized, message: "Bad file descriptor" }
+stack backtrace:
+   0:        0x104e2be9c - __mh_execute_header
+   1:        0x104d80204 - __mh_execute_header
+   2:        0x104e2a528 - __mh_execute_header
+   3:        0x104e2a1d0 - __mh_execute_header
+   4:        0x104e49cc0 - __mh_execute_header
+   5:        0x104e49c7c - __mh_execute_header
+   6:        0x104e49c70 - __mh_execute_header
+   7:        0x104e7f318 - __mh_execute_header
+   8:        0x104e7f5fc - __mh_execute_header
+   9:        0x104e59ba4 - __mh_execute_header
+  10:        0x104ce51c4 - __mh_execute_header
+  11:        0x104d0b62c - __mh_execute_header
+  12:        0x104cd6f74 - __mh_execute_header
+  13:        0x104d37b10 - __mh_execute_header
+[?2026h[2m[38;5;211m────────────────────────────────────────────────────────────────────────────────[39m[22m
+[1C[38;5;211m[1mWARNING:[1CClaude[1CCode[1Crunning[1Cin[1CBypass[1CPermissions[1Cmode[22m[39m
+
+[1CIn[1CBypass[1CPermissions[1Cmode,[1CClaude[1CCode[1Cwill[1Cnot[1Cask[1Cfor[1Cyour[1Capproval[1Cbefore
+[1Crunning[1Cpotentially[1Cdangerous[1Ccommands.
+[1CThis[1Cmode[1Cshould[1Conly[1Cbe[1Cused[1Cin[1Ca[1Csandboxed[1Ccontainer/VM[1Cthat[1Chas[1Crestricted
+[1Cinternet[1Caccess[1Cand[1Ccan[1Ceasily[1Cbe[1Crestored[1Cif[1Cdamaged.
+
+[1CBy[1Cproceeding,[1Cyou[1Caccept[1Call[1Cresponsibility[1Cfor[1Cactions[1Ctaken[1Cwhile[1Crunning
+[1Cin[1CBypass[1CPermissions[1Cmode.
+
+[1Chttps://code.claude.com/docs/en/security
+
+[1C[38;5;153m❯[1C[38;5;246m1.[1C[38;5;153mNo,[1Cexit[39m
+[3C[38;5;246m2.[1C[39mYes,[1CI[1Caccept
+
+[1C[38;5;246m[3mEnter[1Cto[1Cconfirm[1C·[1CEsc[1Cto[1Ccancel[23m[39m
+[?2026l[?2004h[?1004h[?25l[?2026h[6C[4A[38;5;114mNo, exit[1C✔[39m
+
+
+
+[?2026l[<u[?1004l[?2004l[?25h]9;4;0;[?25h[?2026h[?25h[?2026l[<u[?1004l[?2004l[?25h]9;4;0;[?25h[?1004l[?2004l

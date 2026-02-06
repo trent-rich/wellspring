@@ -1,0 +1,28 @@
+
+thread 'main' (2129337) panicked at src/pty.rs:120:37:
+Failed to exec: ENOENT
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'main' (2129337) panicked at /Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.49.0/src/runtime/io/driver.rs:260:27:
+failed to wake I/O driver: Os { code: 9, kind: Uncategorized, message: "Bad file descriptor" }
+stack backtrace:
+   0:        0x101073e9c - __mh_execute_header
+   1:        0x100fc8204 - __mh_execute_header
+   2:        0x101072528 - __mh_execute_header
+   3:        0x1010721d0 - __mh_execute_header
+   4:        0x101091cc0 - __mh_execute_header
+   5:        0x101091c7c - __mh_execute_header
+   6:        0x101091c70 - __mh_execute_header
+   7:        0x1010c7318 - __mh_execute_header
+   8:        0x1010c75fc - __mh_execute_header
+   9:        0x1010a1ba4 - __mh_execute_header
+  10:        0x100f2d1c4 - __mh_execute_header
+  11:        0x100f5362c - __mh_execute_header
+  12:        0x100f1ef74 - __mh_execute_header
+  13:        0x100f7fb10 - __mh_execute_header
+2026-02-06T00:07:24.582Z [relay-pty-orchestrator:claude-1] ERROR:  SIGKILL DETECTED - gathering diagnostics:
+  Memory: 118MB free / 8192MB total (99% used)
+  relay-pty processes: 2
+  Killed process PID: 54926
+  Agent name: claude-1
+  Timestamp: 2026-02-06T00:07:24.582Z

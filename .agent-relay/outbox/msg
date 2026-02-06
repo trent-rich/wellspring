@@ -1,0 +1,10 @@
+TO: DB-Schema
+
+Lead here. Create the SQL migration at supabase/migrations/20260205_agent_runtime.sql with:
+1. agent_jobs table (id, created_at, updated_at, created_by, type, status, priority, input_json, output_json, error, attempts, locked_by, locked_at, run_after, trace_id)
+2. agent_artifacts table
+3. emails and email_threads tables
+4. audit_log table
+5. Proper indexes and RLS policies
+
+Reply to Lead when done.

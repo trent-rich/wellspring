@@ -1,0 +1,109 @@
+{
+  "agents": [
+    {
+      "id": "agent-mla4a4tm-0001-15zuog7w",
+      "name": "Dashboard",
+      "cli": "dashboard",
+      "firstSeen": "2026-02-05T23:58:12.202Z",
+      "lastSeen": "2026-02-06T00:57:59.365Z",
+      "messagesSent": 0,
+      "messagesReceived": 2
+    },
+    {
+      "id": "agent-mla4c0x2-0000-15zuog7w",
+      "name": "__cli_spawner__",
+      "firstSeen": "2026-02-05T23:59:40.454Z",
+      "lastSeen": "2026-02-06T01:03:36.203Z",
+      "messagesSent": 0,
+      "messagesReceived": 0
+    },
+    {
+      "id": "agent-mla4c1e0-0005-15zuog7w",
+      "name": "Lead",
+      "cli": "claude",
+      "workingDirectory": "/Users/trentmcfadyen/wcc/watershed-command-center",
+      "firstSeen": "2026-02-05T23:59:41.064Z",
+      "lastSeen": "2026-02-06T00:57:56.927Z",
+      "messagesSent": 1,
+      "messagesReceived": 1
+    },
+    {
+      "id": "agent-mla4coqs-0005-15zuog7w",
+      "name": "Builder",
+      "cli": "claude",
+      "workingDirectory": "/Users/trentmcfadyen/wcc/watershed-command-center",
+      "firstSeen": "2026-02-06T00:00:11.332Z",
+      "lastSeen": "2026-02-06T00:57:54.878Z",
+      "messagesSent": 1,
+      "messagesReceived": 1
+    },
+    {
+      "id": "agent-mla4kogu-0000-15zuog7w",
+      "name": "claude-1",
+      "cli": "claude",
+      "workingDirectory": "/Users/trentmcfadyen/wcc/watershed-command-center",
+      "firstSeen": "2026-02-06T00:06:24.222Z",
+      "lastSeen": "2026-02-06T00:07:24.477Z",
+      "messagesSent": 0,
+      "messagesReceived": 0
+    },
+    {
+      "id": "agent-mla4t4rj-0001-15zuog7w",
+      "name": "__status__",
+      "firstSeen": "2026-02-06T00:12:58.591Z",
+      "lastSeen": "2026-02-06T01:02:59.305Z",
+      "messagesSent": 0,
+      "messagesReceived": 0
+    },
+    {
+      "id": "agent-mla6fj80-0005-19xb5z5q",
+      "name": "DB-Schema",
+      "cli": "claude",
+      "workingDirectory": "/Users/trentmcfadyen/wcc/watershed-command-center",
+      "firstSeen": "2026-02-06T00:58:23.376Z",
+      "lastSeen": "2026-02-06T01:02:47.041Z",
+      "messagesSent": 0,
+      "messagesReceived": 0
+    },
+    {
+      "id": "agent-mla6iagm-0005-1a0catl6",
+      "name": "Edge-Functions",
+      "cli": "claude",
+      "workingDirectory": "/Users/trentmcfadyen/wcc/watershed-command-center",
+      "firstSeen": "2026-02-06T01:00:31.990Z",
+      "lastSeen": "2026-02-06T01:02:47.030Z",
+      "messagesSent": 0,
+      "messagesReceived": 0
+    },
+    {
+      "id": "agent-mla6ijlm-0005-1a0catl6",
+      "name": "Worker-Service",
+      "cli": "claude",
+      "workingDirectory": "/Users/trentmcfadyen/wcc/watershed-command-center",
+      "firstSeen": "2026-02-06T01:00:43.834Z",
+      "lastSeen": "2026-02-06T01:02:48.859Z",
+      "messagesSent": 0,
+      "messagesReceived": 0
+    },
+    {
+      "id": "agent-mla6isb9-0005-1a0catl6",
+      "name": "Frontend-UI",
+      "cli": "claude",
+      "workingDirectory": "/Users/trentmcfadyen/wcc/watershed-command-center",
+      "firstSeen": "2026-02-06T01:00:55.125Z",
+      "lastSeen": "2026-02-06T01:02:50.151Z",
+      "messagesSent": 0,
+      "messagesReceived": 0
+    },
+    {
+      "id": "agent-mla6llvq-0004-1a5y395w",
+      "name": "Test-Agent",
+      "cli": "claude",
+      "workingDirectory": "/Users/trentmcfadyen/wcc/watershed-command-center",
+      "firstSeen": "2026-02-06T01:03:06.758Z",
+      "lastSeen": "2026-02-06T01:04:56.781Z",
+      "messagesSent": 0,
+      "messagesReceived": 0
+    }
+  ]
+}

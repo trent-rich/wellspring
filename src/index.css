@@ -1,0 +1,268 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 199 89% 48%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 199 89% 48%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Task card styles */
+  .task-card {
+    @apply bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer;
+  }
+
+  .task-card-selected {
+    @apply ring-2 ring-watershed-500 border-watershed-500;
+  }
+
+  /* Priority indicators */
+  .priority-critical {
+    @apply border-l-4 border-l-red-500;
+  }
+
+  .priority-high {
+    @apply border-l-4 border-l-orange-500;
+  }
+
+  .priority-medium {
+    @apply border-l-4 border-l-yellow-500;
+  }
+
+  .priority-low {
+    @apply border-l-4 border-l-gray-300;
+  }
+
+  /* State overlays */
+  .state-embodied {
+    @apply bg-embodied-50/80;
+  }
+
+  .state-settle {
+    @apply bg-settle-50/80;
+  }
+
+  .state-focus {
+    @apply bg-blue-50/80;
+  }
+
+  .state-meeting {
+    @apply bg-purple-50/80;
+  }
+
+  /* Command palette */
+  .command-palette {
+    @apply fixed inset-0 z-50 bg-black/50 flex items-start justify-center pt-[20vh];
+  }
+
+  .command-palette-content {
+    @apply bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden;
+  }
+
+  /* Voice input indicator */
+  .voice-listening {
+    @apply animate-pulse bg-red-500;
+  }
+
+  /* Containment progress */
+  .containment-progress {
+    @apply h-1 rounded-full bg-gray-200 overflow-hidden;
+  }
+
+  .containment-progress-bar {
+    @apply h-full bg-gradient-to-r from-amber-500 to-green-500 transition-all duration-1000;
+  }
+
+  /* Schedule strip */
+  .schedule-strip {
+    @apply bg-gradient-to-r from-watershed-50 to-white border-b border-watershed-100;
+  }
+
+  /* Meeting card */
+  .meeting-card {
+    @apply bg-white rounded-lg border-2 border-purple-200 p-4;
+  }
+
+  .meeting-card-urgent {
+    @apply border-purple-500 bg-purple-50 animate-pulse-slow;
+  }
+
+  /* KPI tiles */
+  .kpi-tile {
+    @apply bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer;
+  }
+
+  .kpi-tile-alert {
+    @apply border-red-300 bg-red-50;
+  }
+
+  /* Drawer */
+  .drawer-overlay {
+    @apply fixed inset-0 bg-black/30 z-40;
+  }
+
+  .drawer-panel {
+    @apply fixed right-0 top-0 h-full w-full max-w-xl bg-white shadow-xl z-50 overflow-y-auto;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-cell-1 {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  .badge-cell-2 {
+    @apply bg-purple-100 text-purple-800;
+  }
+
+  .badge-cell-3 {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .badge-cell-4 {
+    @apply bg-orange-100 text-orange-800;
+  }
+
+  .badge-cell-5 {
+    @apply bg-red-100 text-red-800;
+  }
+
+  /* Button variants */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-watershed-500 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply bg-watershed-600 text-white hover:bg-watershed-700 px-4 py-2;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-100 text-gray-900 hover:bg-gray-200 px-4 py-2;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-gray-100 px-3 py-2;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 px-4 py-2;
+  }
+
+  .btn-icon {
+    @apply p-2 hover:bg-gray-100 rounded-md;
+  }
+
+  /* Input styles */
+  .input {
+    @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-watershed-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .textarea {
+    @apply flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-watershed-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* Select */
+  .select {
+    @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-watershed-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50;
+  }
+}
+
+@layer utilities {
+  /* Scrollbar styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.300') transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: theme('colors.gray.300');
+    border-radius: 3px;
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}

@@ -1,0 +1,402 @@
+2026-02-05T23:36:59.892Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center teamDir=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:36:59.893Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-05T23:36:59.893Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-05T23:36:59.894Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-05T23:39:20.736Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center teamDir=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:39:20.736Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-05T23:39:20.737Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-05T23:39:20.738Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-05T23:40:28.827Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center teamDir=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:40:28.827Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-05T23:40:28.827Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-05T23:40:28.828Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-05T23:41:48.268Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center teamDir=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:41:48.269Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-05T23:41:48.269Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-05T23:41:48.269Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-05T23:42:52.838Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center teamDir=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:42:52.838Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-05T23:42:52.838Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-05T23:42:52.839Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-05T23:43:58.663Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center teamDir=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:43:58.664Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-05T23:43:58.664Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-05T23:43:58.665Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-05T23:45:37.107Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center teamDir=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:45:37.107Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-05T23:45:37.107Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-05T23:45:37.108Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-05T23:47:11.252Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center teamDir=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:47:11.252Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-05T23:47:11.253Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-05T23:47:11.254Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-05T23:48:31.377Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center teamDir=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:48:31.378Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-05T23:48:31.378Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-05T23:48:31.379Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-05T23:50:10.979Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center teamDir=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/Documents/Project InnerSpace/Watershed/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:50:10.979Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-05T23:50:10.979Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-05T23:50:10.980Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-05T23:58:03.770Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/wcc/watershed-command-center teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:58:03.770Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-05T23:58:03.770Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-05T23:58:03.771Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-05T23:58:03.772Z [INFO] [daemon] Listening socketPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/relay.sock
+2026-02-05T23:58:12.192Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/wcc/watershed-command-center teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-05T23:58:12.198Z [INFO] [spawner] Dashboard port set to 3888 - nested spawns now enabled
+2026-02-05T23:58:12.202Z [INFO] [daemon] Agent registered agent=Dashboard
+2026-02-05T23:58:12.204Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-05T23:58:12.204Z [INFO] [daemon] Broadcast AGENT_READY agent=Dashboard
+2026-02-05T23:59:40.455Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-05T23:59:40.456Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-05T23:59:40.457Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-05T23:59:40.463Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Lead cli=claude
+2026-02-05T23:59:40.465Z [INFO] [spawner] Spawn lock acquired for Lead (concurrent spawns: 1)
+2026-02-05T23:59:40.481Z [WARN] [spawner] Could not resolve path for 'claude', spawn may fail
+2026-02-05T23:59:40.481Z [INFO] [spawner] Agent Lead: model=opus, cli=claude, variant=claude:sonnet
+2026-02-05T23:59:40.482Z [INFO] [spawner] Spawning Lead: dashboardPort=none (nested spawns disabled)
+2026-02-05T23:59:40.525Z [INFO] [router] Agent marked as spawning: Lead currentSpawning=Lead
+2026-02-05T23:59:41.065Z [INFO] [daemon] Agent registered agent=Lead
+2026-02-05T23:59:41.065Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,__cli_spawner__,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-05T23:59:41.065Z [INFO] [daemon] Broadcast AGENT_READY agent=Lead
+2026-02-06T00:00:10.487Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:00:10.758Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T00:00:10.759Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:00:10.762Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T00:00:10.769Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Builder cli=claude
+2026-02-06T00:00:10.769Z [INFO] [spawner] Spawn lock acquired for Builder (concurrent spawns: 2)
+2026-02-06T00:00:10.775Z [WARN] [spawner] Could not resolve path for 'claude', spawn may fail
+2026-02-06T00:00:10.776Z [INFO] [spawner] Agent Builder: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T00:00:10.776Z [INFO] [spawner] Spawning Builder: dashboardPort=none (nested spawns disabled)
+2026-02-06T00:00:10.799Z [INFO] [router] Agent marked as spawning: Builder currentSpawning=Builder
+2026-02-06T00:00:11.139Z [INFO] [spawner] Registration poll #1 for Lead: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:00:11.139Z [INFO] [spawner] Agent Lead registered after 1 polls
+2026-02-06T00:00:11.333Z [INFO] [daemon] Agent registered agent=Builder
+2026-02-06T00:00:11.333Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,__cli_spawner__,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:00:11.334Z [INFO] [daemon] Broadcast AGENT_READY agent=Builder
+2026-02-06T00:00:40.788Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:00:41.430Z [INFO] [spawner] Registration poll #1 for Builder: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:00:41.430Z [INFO] [spawner] Agent Builder registered after 1 polls
+2026-02-06T00:01:15.236Z [ERROR] [spawner] Lead failed to become ready after 3 attempts - task may be lost
+2026-02-06T00:01:15.240Z [ERROR] [spawner] CRITICAL: [ERR-1770336075-66cf] Task injection failed | agentName=Lead cli=claude attempts=3 taskLength=84
+2026-02-06T00:01:15.308Z [INFO] [spawner] Spawn lock released for Lead (remaining: 1)
+2026-02-06T00:01:15.311Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:01:45.577Z [ERROR] [spawner] Builder failed to become ready after 3 attempts - task may be lost
+2026-02-06T00:01:45.584Z [ERROR] [spawner] CRITICAL: [ERR-1770336105-6408] Task injection failed | agentName=Builder cli=claude attempts=3 taskLength=84
+2026-02-06T00:01:45.658Z [INFO] [spawner] Spawn lock released for Builder (remaining: 0)
+2026-02-06T00:01:45.664Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:06:23.586Z [INFO] [spawner] Spawn lock acquired for claude-1 (concurrent spawns: 1)
+2026-02-06T00:06:23.611Z [WARN] [spawner] Could not resolve path for 'claude', spawn may fail
+2026-02-06T00:06:23.614Z [INFO] [spawner] Agent claude-1: model=opus, cli=claude --model sonnet, variant=claude:sonnet
+2026-02-06T00:06:23.614Z [INFO] [spawner] Spawning claude-1: dashboardPort=3888 (nested spawns enabled)
+2026-02-06T00:06:24.223Z [INFO] [daemon] Agent registered agent=claude-1
+2026-02-06T00:06:24.227Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,claude-1 path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:06:24.228Z [INFO] [daemon] Broadcast AGENT_READY agent=claude-1
+2026-02-06T00:06:54.323Z [INFO] [spawner] Registration poll #1 for claude-1: connected=false recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:06:54.826Z [INFO] [spawner] Registration poll #2 for claude-1: connected=false recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:06:55.329Z [INFO] [spawner] Registration poll #3 for claude-1: connected=false recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:06:58.842Z [INFO] [spawner] Registration poll #10 for claude-1: connected=false recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:07:03.860Z [INFO] [spawner] Registration poll #20 for claude-1: connected=false recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:07:08.884Z [INFO] [spawner] Registration poll #30 for claude-1: connected=false recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:07:13.916Z [INFO] [spawner] Registration poll #40 for claude-1: connected=false recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:07:18.933Z [INFO] [spawner] Registration poll #50 for claude-1: connected=false recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:07:23.947Z [INFO] [spawner] Registration poll #60 for claude-1: connected=false recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:07:24.449Z [INFO] [spawner] Registration timeout for claude-1 after 60 polls
+2026-02-06T00:07:24.459Z [ERROR] [spawner] [ERR-1770336444-e19c] Agent registration timeout | agentName=claude-1 cli=claude --model sonnet pid=54926 timeoutMs=30000
+2026-02-06T00:07:24.472Z [INFO] [spawner] Spawn lock released for claude-1 (remaining: 0)
+2026-02-06T00:07:24.484Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:08:06.010Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T00:08:06.011Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:08:06.012Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T00:08:06.016Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Lead cli=claude
+2026-02-06T00:08:06.017Z [INFO] [spawner] Spawn lock acquired for Lead (concurrent spawns: 1)
+2026-02-06T00:08:06.038Z [WARN] [spawner] Could not resolve path for 'claude', spawn may fail
+2026-02-06T00:08:06.039Z [INFO] [spawner] Agent Lead: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T00:08:06.039Z [INFO] [spawner] Spawning Lead: dashboardPort=none (nested spawns disabled)
+2026-02-06T00:08:06.075Z [INFO] [router] Agent marked as spawning: Lead currentSpawning=Lead
+2026-02-06T00:08:06.625Z [INFO] [daemon] Agent registered agent=Lead
+2026-02-06T00:08:06.626Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,__cli_spawner__,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:08:06.627Z [INFO] [daemon] Broadcast AGENT_READY agent=Lead
+2026-02-06T00:08:36.038Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:08:36.673Z [INFO] [spawner] Registration poll #1 for Lead: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:08:36.673Z [INFO] [spawner] Agent Lead registered after 1 polls
+2026-02-06T00:08:49.561Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T00:08:49.566Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:08:49.568Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T00:08:49.583Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Lead cli=claude
+2026-02-06T00:08:49.596Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:08:56.865Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T00:08:56.867Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:08:56.868Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T00:08:56.872Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Builder cli=claude
+2026-02-06T00:08:56.873Z [INFO] [spawner] Spawn lock acquired for Builder (concurrent spawns: 2)
+2026-02-06T00:08:56.892Z [WARN] [spawner] Could not resolve path for 'claude', spawn may fail
+2026-02-06T00:08:56.892Z [INFO] [spawner] Agent Builder: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T00:08:56.892Z [INFO] [spawner] Spawning Builder: dashboardPort=none (nested spawns disabled)
+2026-02-06T00:08:56.942Z [INFO] [router] Agent marked as spawning: Builder currentSpawning=Builder
+2026-02-06T00:08:57.486Z [INFO] [daemon] Agent registered agent=Builder
+2026-02-06T00:08:57.486Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,__cli_spawner__,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:08:57.487Z [INFO] [daemon] Broadcast AGENT_READY agent=Builder
+2026-02-06T00:09:27.242Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:09:27.555Z [INFO] [spawner] Registration poll #1 for Builder: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:09:27.556Z [INFO] [spawner] Agent Builder registered after 1 polls
+2026-02-06T00:09:40.857Z [ERROR] [spawner] Lead failed to become ready after 3 attempts - task may be lost
+2026-02-06T00:09:40.862Z [ERROR] [spawner] CRITICAL: [ERR-1770336580-e75e] Task injection failed | agentName=Lead cli=claude attempts=3 taskLength=84
+2026-02-06T00:09:40.946Z [INFO] [spawner] Spawn lock released for Lead (remaining: 1)
+2026-02-06T00:09:40.954Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:10:27.285Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:10:31.713Z [ERROR] [spawner] Builder failed to become ready after 3 attempts - task may be lost
+2026-02-06T00:10:31.718Z [ERROR] [spawner] CRITICAL: [ERR-1770336631-79df] Task injection failed | agentName=Builder cli=claude attempts=3 taskLength=70
+2026-02-06T00:10:31.791Z [INFO] [spawner] Spawn lock released for Builder (remaining: 0)
+2026-02-06T00:10:31.794Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:10:34.632Z [INFO] [router] User registered: Lead (1 connections)
+2026-02-06T00:10:34.635Z [INFO] [daemon] Agent registered agent=Lead
+2026-02-06T00:10:34.640Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:10:34.641Z [INFO] [daemon] Broadcast AGENT_READY agent=Lead
+2026-02-06T00:10:34.650Z [INFO] [router] User fully unregistered: Lead (all connections closed)
+2026-02-06T00:10:34.651Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:11:14.268Z [INFO] [router] User registered: Lead (1 connections)
+2026-02-06T00:11:14.269Z [INFO] [daemon] Agent registered agent=Lead
+2026-02-06T00:11:14.271Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:11:14.272Z [INFO] [daemon] Broadcast AGENT_READY agent=Lead
+2026-02-06T00:11:14.277Z [INFO] [router] User fully unregistered: Lead (all connections closed)
+2026-02-06T00:11:14.278Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:12:24.234Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T00:12:24.246Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:12:24.249Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T00:12:24.257Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Lead cli=claude
+2026-02-06T00:12:24.266Z [INFO] [spawner] Spawn lock acquired for Lead (concurrent spawns: 1)
+2026-02-06T00:12:24.337Z [WARN] [spawner] Could not resolve path for 'claude', spawn may fail
+2026-02-06T00:12:24.341Z [INFO] [spawner] Agent Lead: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T00:12:24.341Z [INFO] [spawner] Spawning Lead: dashboardPort=none (nested spawns disabled)
+2026-02-06T00:12:24.415Z [INFO] [router] Agent marked as spawning: Lead currentSpawning=Lead
+2026-02-06T00:12:25.033Z [INFO] [daemon] Agent registered agent=Lead
+2026-02-06T00:12:25.035Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,__cli_spawner__,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:12:25.036Z [INFO] [daemon] Broadcast AGENT_READY agent=Lead
+2026-02-06T00:12:54.303Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:12:55.128Z [INFO] [spawner] Registration poll #1 for Lead: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:12:55.128Z [INFO] [spawner] Agent Lead registered after 1 polls
+2026-02-06T00:12:58.596Z [INFO] [daemon] Agent registered agent=__status__
+2026-02-06T00:12:58.600Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,__status__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:12:58.601Z [INFO] [daemon] Broadcast AGENT_READY agent=__status__
+2026-02-06T00:12:58.623Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:13:59.310Z [ERROR] [spawner] Lead failed to become ready after 3 attempts - task may be lost
+2026-02-06T00:13:59.323Z [ERROR] [spawner] CRITICAL: [ERR-1770336839-8137] Task injection failed | agentName=Lead cli=claude attempts=3 taskLength=181
+2026-02-06T00:13:59.401Z [INFO] [spawner] Spawn lock released for Lead (remaining: 0)
+2026-02-06T00:13:59.419Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:15:46.867Z [INFO] [daemon] Writing connected-agents.json agents= path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:15:47.088Z [INFO] [daemon] Stopped
+2026-02-06T00:15:47.417Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/wcc/watershed-command-center teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:15:47.417Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-06T00:15:47.417Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-06T00:15:47.418Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-06T00:15:47.420Z [INFO] [daemon] Listening socketPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/relay.sock
+2026-02-06T00:15:48.940Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/wcc/watershed-command-center teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:15:48.945Z [INFO] [spawner] Dashboard port set to 3888 - nested spawns now enabled
+2026-02-06T00:15:48.947Z [INFO] [daemon] Agent registered agent=Dashboard
+2026-02-06T00:15:48.948Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:15:48.949Z [INFO] [daemon] Broadcast AGENT_READY agent=Dashboard
+2026-02-06T00:16:09.606Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T00:16:09.607Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:16:09.609Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T00:16:09.616Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Lead cli=claude
+2026-02-06T00:16:09.619Z [INFO] [spawner] Spawn lock acquired for Lead (concurrent spawns: 1)
+2026-02-06T00:16:09.630Z [WARN] [spawner] Could not resolve path for 'claude', spawn may fail
+2026-02-06T00:16:09.632Z [INFO] [spawner] Agent Lead: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T00:16:09.632Z [INFO] [spawner] Spawning Lead: dashboardPort=none (nested spawns disabled)
+2026-02-06T00:16:09.682Z [INFO] [router] Agent marked as spawning: Lead currentSpawning=Lead
+2026-02-06T00:16:10.221Z [INFO] [daemon] Agent registered agent=Lead
+2026-02-06T00:16:10.221Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,__cli_spawner__,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:16:10.222Z [INFO] [daemon] Broadcast AGENT_READY agent=Lead
+2026-02-06T00:16:39.638Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:16:40.275Z [INFO] [spawner] Registration poll #1 for Lead: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:16:40.275Z [INFO] [spawner] Agent Lead registered after 1 polls
+2026-02-06T00:17:44.483Z [ERROR] [spawner] Lead failed to become ready after 3 attempts - task may be lost
+2026-02-06T00:17:44.491Z [ERROR] [spawner] CRITICAL: [ERR-1770337064-3f80] Task injection failed | agentName=Lead cli=claude attempts=3 taskLength=170
+2026-02-06T00:17:44.571Z [INFO] [spawner] Spawn lock released for Lead (remaining: 0)
+2026-02-06T00:17:44.575Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:18:40.071Z [INFO] [daemon] Writing connected-agents.json agents= path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:18:40.466Z [INFO] [daemon] Stopped
+2026-02-06T00:18:40.747Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/wcc/watershed-command-center teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:18:40.747Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-06T00:18:40.747Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-06T00:18:40.748Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-06T00:18:40.752Z [INFO] [daemon] Listening socketPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/relay.sock
+2026-02-06T00:18:44.211Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/wcc/watershed-command-center teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:18:44.222Z [INFO] [spawner] Dashboard port set to 3888 - nested spawns now enabled
+2026-02-06T00:18:44.233Z [INFO] [daemon] Agent registered agent=Dashboard
+2026-02-06T00:18:44.235Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:18:44.235Z [INFO] [daemon] Broadcast AGENT_READY agent=Dashboard
+2026-02-06T00:18:45.776Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T00:18:45.777Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:18:45.777Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T00:18:45.787Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Lead cli=claude
+2026-02-06T00:18:45.788Z [INFO] [spawner] Spawn lock acquired for Lead (concurrent spawns: 1)
+2026-02-06T00:18:45.795Z [INFO] [spawner] Agent Lead: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T00:18:45.795Z [INFO] [spawner] Spawning Lead: dashboardPort=none (nested spawns disabled)
+2026-02-06T00:18:45.824Z [INFO] [router] Agent marked as spawning: Lead currentSpawning=Lead
+2026-02-06T00:18:46.341Z [INFO] [daemon] Agent registered agent=Lead
+2026-02-06T00:18:46.341Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,__cli_spawner__,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:18:46.342Z [INFO] [daemon] Broadcast AGENT_READY agent=Lead
+2026-02-06T00:18:49.397Z [INFO] [spawner] Registration poll #1 for Lead: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:18:49.397Z [INFO] [spawner] Agent Lead registered after 1 polls
+2026-02-06T00:18:51.155Z [INFO] [spawner] Spawned Lead (claude) [pid: 58340]
+2026-02-06T00:18:51.155Z [INFO] [spawner] Spawn lock released for Lead (remaining: 0)
+2026-02-06T00:18:51.168Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:18:58.816Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T00:18:58.819Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:18:58.819Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T00:18:58.825Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Builder cli=claude
+2026-02-06T00:18:58.825Z [INFO] [spawner] Spawn lock acquired for Builder (concurrent spawns: 1)
+2026-02-06T00:18:58.830Z [INFO] [spawner] Agent Builder: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T00:18:58.830Z [INFO] [spawner] Spawning Builder: dashboardPort=none (nested spawns disabled)
+2026-02-06T00:18:58.858Z [INFO] [router] Agent marked as spawning: Builder currentSpawning=Builder
+2026-02-06T00:18:59.375Z [INFO] [daemon] Agent registered agent=Builder
+2026-02-06T00:18:59.376Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,__cli_spawner__,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:18:59.376Z [INFO] [daemon] Broadcast AGENT_READY agent=Builder
+2026-02-06T00:18:59.695Z [INFO] [spawner] Registration poll #1 for Builder: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:18:59.695Z [INFO] [spawner] Agent Builder registered after 1 polls
+2026-02-06T00:19:01.453Z [INFO] [spawner] Spawned Builder (claude) [pid: 58367]
+2026-02-06T00:19:01.454Z [INFO] [spawner] Spawn lock released for Builder (remaining: 0)
+2026-02-06T00:19:01.476Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:19:41.425Z [INFO] [router] User registered: Lead (1 connections)
+2026-02-06T00:19:41.426Z [INFO] [daemon] Agent registered agent=Lead
+2026-02-06T00:19:41.427Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:19:41.427Z [INFO] [daemon] Broadcast AGENT_READY agent=Lead
+2026-02-06T00:19:41.435Z [INFO] [router] User fully unregistered: Lead (all connections closed)
+2026-02-06T00:19:41.435Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:20:13.361Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:21:53.476Z [WARN] [router] Processing timeout for Dashboard
+2026-02-06T00:21:53.477Z [WARN] [router] Processing timeout for Lead
+2026-02-06T00:56:13.027Z [INFO] [daemon] Writing connected-agents.json agents=Dashboard,Lead,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:57:59.365Z [INFO] [daemon] Writing connected-agents.json agents=Lead,Builder path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:57:59.644Z [INFO] [daemon] Stopped
+2026-02-06T00:58:10.977Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/wcc/watershed-command-center teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:58:10.978Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-06T00:58:10.978Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-06T00:58:10.979Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-06T00:58:10.980Z [INFO] [daemon] Listening socketPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/relay.sock
+2026-02-06T00:58:13.854Z [INFO] [daemon] Agent registered agent=__status__
+2026-02-06T00:58:13.854Z [INFO] [daemon] Writing connected-agents.json agents=__status__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:58:13.854Z [INFO] [daemon] Broadcast AGENT_READY agent=__status__
+2026-02-06T00:58:13.865Z [INFO] [daemon] Writing connected-agents.json agents= path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:58:22.730Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T00:58:22.731Z [INFO] [daemon] Writing connected-agents.json agents=__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:58:22.731Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T00:58:22.741Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=DB-Schema cli=claude
+2026-02-06T00:58:22.742Z [INFO] [spawner] Spawn lock acquired for DB-Schema (concurrent spawns: 1)
+2026-02-06T00:58:22.785Z [WARN] [spawner] Could not resolve path for 'claude', spawn may fail
+2026-02-06T00:58:22.806Z [INFO] [spawner] Agent DB-Schema: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T00:58:22.807Z [INFO] [spawner] Spawning DB-Schema: dashboardPort=none (nested spawns disabled)
+2026-02-06T00:58:22.852Z [INFO] [router] Agent marked as spawning: DB-Schema currentSpawning=DB-Schema
+2026-02-06T00:58:23.376Z [INFO] [daemon] Agent registered agent=DB-Schema
+2026-02-06T00:58:23.378Z [INFO] [daemon] Writing connected-agents.json agents=__cli_spawner__,DB-Schema path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:58:23.378Z [INFO] [daemon] Broadcast AGENT_READY agent=DB-Schema
+2026-02-06T00:58:52.748Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T00:58:53.418Z [INFO] [spawner] Registration poll #1 for DB-Schema: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T00:58:53.419Z [INFO] [spawner] Agent DB-Schema registered after 1 polls
+2026-02-06T00:59:54.020Z [INFO] [daemon] Stopped
+2026-02-06T01:00:03.342Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/wcc/watershed-command-center teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T01:00:03.347Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-06T01:00:03.347Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-06T01:00:03.348Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-06T01:00:03.356Z [INFO] [daemon] Listening socketPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/relay.sock
+2026-02-06T01:00:06.065Z [INFO] [daemon] Agent registered agent=__status__
+2026-02-06T01:00:06.065Z [INFO] [daemon] Writing connected-agents.json agents=__status__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:06.066Z [INFO] [daemon] Broadcast AGENT_READY agent=__status__
+2026-02-06T01:00:06.075Z [INFO] [daemon] Writing connected-agents.json agents= path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:11.427Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T01:00:11.428Z [INFO] [daemon] Writing connected-agents.json agents=__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:11.430Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T01:00:11.438Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=DB-Schema cli=claude
+2026-02-06T01:00:11.440Z [INFO] [spawner] Spawn lock acquired for DB-Schema (concurrent spawns: 1)
+2026-02-06T01:00:11.447Z [INFO] [spawner] Agent DB-Schema: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T01:00:11.448Z [INFO] [spawner] Spawning DB-Schema: dashboardPort=none (nested spawns disabled)
+2026-02-06T01:00:11.494Z [INFO] [router] Agent marked as spawning: DB-Schema currentSpawning=DB-Schema
+2026-02-06T01:00:12.010Z [INFO] [daemon] Agent registered agent=DB-Schema
+2026-02-06T01:00:12.010Z [INFO] [daemon] Writing connected-agents.json agents=__cli_spawner__,DB-Schema path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:12.011Z [INFO] [daemon] Broadcast AGENT_READY agent=DB-Schema
+2026-02-06T01:00:15.057Z [INFO] [spawner] Registration poll #1 for DB-Schema: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T01:00:15.057Z [INFO] [spawner] Agent DB-Schema registered after 1 polls
+2026-02-06T01:00:16.813Z [INFO] [spawner] Spawned DB-Schema (claude) [pid: 59640]
+2026-02-06T01:00:16.813Z [INFO] [spawner] Spawn lock released for DB-Schema (remaining: 0)
+2026-02-06T01:00:16.821Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:31.434Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T01:00:31.435Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:31.436Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T01:00:31.443Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Edge-Functions cli=claude
+2026-02-06T01:00:31.444Z [INFO] [spawner] Spawn lock acquired for Edge-Functions (concurrent spawns: 1)
+2026-02-06T01:00:31.451Z [INFO] [spawner] Agent Edge-Functions: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T01:00:31.451Z [INFO] [spawner] Spawning Edge-Functions: dashboardPort=none (nested spawns disabled)
+2026-02-06T01:00:31.476Z [INFO] [router] Agent marked as spawning: Edge-Functions currentSpawning=Edge-Functions
+2026-02-06T01:00:31.991Z [INFO] [daemon] Agent registered agent=Edge-Functions
+2026-02-06T01:00:31.991Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema,__cli_spawner__,Edge-Functions path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:31.991Z [INFO] [daemon] Broadcast AGENT_READY agent=Edge-Functions
+2026-02-06T01:00:34.527Z [INFO] [spawner] Registration poll #1 for Edge-Functions: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T01:00:34.527Z [INFO] [spawner] Agent Edge-Functions registered after 1 polls
+2026-02-06T01:00:36.685Z [INFO] [spawner] Spawned Edge-Functions (claude) [pid: 59671]
+2026-02-06T01:00:36.685Z [INFO] [spawner] Spawn lock released for Edge-Functions (remaining: 0)
+2026-02-06T01:00:36.691Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema,Edge-Functions path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:43.273Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T01:00:43.274Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema,Edge-Functions,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:43.274Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T01:00:43.284Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Worker-Service cli=claude
+2026-02-06T01:00:43.285Z [INFO] [spawner] Spawn lock acquired for Worker-Service (concurrent spawns: 1)
+2026-02-06T01:00:43.292Z [INFO] [spawner] Agent Worker-Service: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T01:00:43.292Z [INFO] [spawner] Spawning Worker-Service: dashboardPort=none (nested spawns disabled)
+2026-02-06T01:00:43.319Z [INFO] [router] Agent marked as spawning: Worker-Service currentSpawning=Worker-Service
+2026-02-06T01:00:43.834Z [INFO] [daemon] Agent registered agent=Worker-Service
+2026-02-06T01:00:43.835Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema,Edge-Functions,__cli_spawner__,Worker-Service path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:43.835Z [INFO] [daemon] Broadcast AGENT_READY agent=Worker-Service
+2026-02-06T01:00:46.368Z [INFO] [spawner] Registration poll #1 for Worker-Service: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T01:00:46.368Z [INFO] [spawner] Agent Worker-Service registered after 1 polls
+2026-02-06T01:00:48.324Z [INFO] [spawner] Spawned Worker-Service (claude) [pid: 59701]
+2026-02-06T01:00:48.324Z [INFO] [spawner] Spawn lock released for Worker-Service (remaining: 0)
+2026-02-06T01:00:48.330Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema,Edge-Functions,Worker-Service path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:54.571Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T01:00:54.572Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema,Edge-Functions,Worker-Service,__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:54.572Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T01:00:54.581Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Frontend-UI cli=claude
+2026-02-06T01:00:54.581Z [INFO] [spawner] Spawn lock acquired for Frontend-UI (concurrent spawns: 1)
+2026-02-06T01:00:54.586Z [INFO] [spawner] Agent Frontend-UI: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T01:00:54.586Z [INFO] [spawner] Spawning Frontend-UI: dashboardPort=none (nested spawns disabled)
+2026-02-06T01:00:54.614Z [INFO] [router] Agent marked as spawning: Frontend-UI currentSpawning=Frontend-UI
+2026-02-06T01:00:55.125Z [INFO] [daemon] Agent registered agent=Frontend-UI
+2026-02-06T01:00:55.125Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema,Edge-Functions,Worker-Service,__cli_spawner__,Frontend-UI path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:00:55.126Z [INFO] [daemon] Broadcast AGENT_READY agent=Frontend-UI
+2026-02-06T01:00:57.562Z [INFO] [spawner] Registration poll #1 for Frontend-UI: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T01:00:57.562Z [INFO] [spawner] Agent Frontend-UI registered after 1 polls
+2026-02-06T01:00:59.718Z [INFO] [spawner] Spawned Frontend-UI (claude) [pid: 59728]
+2026-02-06T01:00:59.718Z [INFO] [spawner] Spawn lock released for Frontend-UI (remaining: 0)
+2026-02-06T01:00:59.723Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema,Edge-Functions,Worker-Service,Frontend-UI path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:01:23.007Z [INFO] [daemon] Writing connected-agents.json agents=DB-Schema,Edge-Functions,Worker-Service,Frontend-UI path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:02:50.778Z [INFO] [daemon] Stopped
+2026-02-06T01:02:56.356Z [INFO] [spawner] AgentSpawner paths: projectRoot=/Users/trentmcfadyen/wcc/watershed-command-center teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team (explicit=false) agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T01:02:56.356Z [INFO] [spawner] Checking for orphaned workers from previous run (3 entries)
+2026-02-06T01:02:56.357Z [INFO] [daemon] SpawnManager initialized with spawn tracking callbacks
+2026-02-06T01:02:56.357Z [INFO] [daemon] Consensus mechanism enabled
+2026-02-06T01:02:56.358Z [INFO] [daemon] Cloud sync disabled (not linked to cloud)
+2026-02-06T01:02:56.359Z [INFO] [daemon] Listening socketPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/relay.sock
+2026-02-06T01:02:59.294Z [INFO] [daemon] Agent registered agent=__status__
+2026-02-06T01:02:59.295Z [INFO] [daemon] Writing connected-agents.json agents=__status__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:02:59.295Z [INFO] [daemon] Broadcast AGENT_READY agent=__status__
+2026-02-06T01:02:59.305Z [INFO] [daemon] Writing connected-agents.json agents= path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:03:06.188Z [INFO] [daemon] Agent registered agent=__cli_spawner__
+2026-02-06T01:03:06.188Z [INFO] [daemon] Writing connected-agents.json agents=__cli_spawner__ path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:03:06.188Z [INFO] [daemon] Broadcast AGENT_READY agent=__cli_spawner__
+2026-02-06T01:03:06.197Z [INFO] [daemon] SPAWN request: from=__cli_spawner__ agent=Test-Agent cli=claude
+2026-02-06T01:03:06.198Z [INFO] [spawner] Spawn lock acquired for Test-Agent (concurrent spawns: 1)
+2026-02-06T01:03:06.208Z [INFO] [spawner] Agent Test-Agent: model=opus, cli=claude, variant=claude:sonnet
+2026-02-06T01:03:06.208Z [INFO] [spawner] Spawning Test-Agent: dashboardPort=none (nested spawns disabled)
+2026-02-06T01:03:06.240Z [INFO] [router] Agent marked as spawning: Test-Agent currentSpawning=Test-Agent
+2026-02-06T01:03:06.758Z [INFO] [daemon] Agent registered agent=Test-Agent
+2026-02-06T01:03:06.759Z [INFO] [daemon] Writing connected-agents.json agents=__cli_spawner__,Test-Agent path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:03:06.759Z [INFO] [daemon] Broadcast AGENT_READY agent=Test-Agent
+2026-02-06T01:03:09.502Z [INFO] [spawner] Registration poll #1 for Test-Agent: connected=true recentlySeen=true agentsPath=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json
+2026-02-06T01:03:09.502Z [INFO] [spawner] Agent Test-Agent registered after 1 polls
+2026-02-06T01:03:36.203Z [INFO] [daemon] Writing connected-agents.json agents=Test-Agent path=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team/connected-agents.json teamDir=/Users/trentmcfadyen/wcc/watershed-command-center/.agent-relay/team
+2026-02-06T01:04:16.761Z [ERROR] [spawner] Test-Agent failed to become ready after 3 attempts - task may be lost
+2026-02-06T01:04:16.762Z [ERROR] [spawner] CRITICAL: [ERR-1770339856-dc7a] Task injection failed | agentName=Test-Agent cli=claude attempts=3 taskLength=29
+2026-02-06T01:04:16.762Z [INFO] [spawner] Spawn lock released for Test-Agent (remaining: 0)
+2026-02-06T01:04:57.751Z [INFO] [daemon] Stopped

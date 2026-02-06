@@ -1,0 +1,230 @@
+
+thread 'main' (2121909) panicked at src/pty.rs:120:37:
+Failed to exec: ENOENT
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'main' (2121909) panicked at /Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.49.0/src/runtime/io/driver.rs:260:27:
+failed to wake I/O driver: Os { code: 9, kind: Uncategorized, message: "Bad file descriptor" }
+stack backtrace:
+   0:        0x100723e9c - __mh_execute_header
+   1:        0x100678204 - __mh_execute_header
+   2:        0x100722528 - __mh_execute_header
+   3:        0x1007221d0 - __mh_execute_header
+   4:        0x100741cc0 - __mh_execute_header
+   5:        0x100741c7c - __mh_execute_header
+   6:        0x100741c70 - __mh_execute_header
+   7:        0x100777318 - __mh_execute_header
+   8:        0x1007775fc - __mh_execute_header
+   9:        0x100751ba4 - __mh_execute_header
+  10:        0x1005dd1c4 - __mh_execute_header
+  11:        0x10060362c - __mh_execute_header
+  12:        0x1005cef74 - __mh_execute_header
+  13:        0x10062fb10 - __mh_execute_header
+
+thread 'main' (2131468) panicked at src/pty.rs:120:37:
+Failed to exec: ENOENT
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'main' (2131468) panicked at /Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.49.0/src/runtime/io/driver.rs:260:27:
+failed to wake I/O driver: Os { code: 9, kind: Uncategorized, message: "Bad file descriptor" }
+stack backtrace:
+   0:        0x10044be9c - __mh_execute_header
+   1:        0x1003a0204 - __mh_execute_header
+   2:        0x10044a528 - __mh_execute_header
+   3:        0x10044a1d0 - __mh_execute_header
+   4:        0x100469cc0 - __mh_execute_header
+   5:        0x100469c7c - __mh_execute_header
+   6:        0x100469c70 - __mh_execute_header
+   7:        0x10049f318 - __mh_execute_header
+   8:        0x10049f5fc - __mh_execute_header
+   9:        0x100479ba4 - __mh_execute_header
+  10:        0x1003051c4 - __mh_execute_header
+  11:        0x10032b62c - __mh_execute_header
+  12:        0x1002f6f74 - __mh_execute_header
+  13:        0x100357b10 - __mh_execute_header
+
+thread 'main' (2137958) panicked at src/pty.rs:120:37:
+Failed to exec: ENOENT
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'main' (2137958) panicked at /Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.49.0/src/runtime/io/driver.rs:260:27:
+failed to wake I/O driver: Os { code: 9, kind: Uncategorized, message: "Bad file descriptor" }
+stack backtrace:
+   0:        0x104217e9c - __mh_execute_header
+   1:        0x10416c204 - __mh_execute_header
+   2:        0x104216528 - __mh_execute_header
+   3:        0x1042161d0 - __mh_execute_header
+   4:        0x104235cc0 - __mh_execute_header
+   5:        0x104235c7c - __mh_execute_header
+   6:        0x104235c70 - __mh_execute_header
+   7:        0x10426b318 - __mh_execute_header
+   8:        0x10426b5fc - __mh_execute_header
+   9:        0x104245ba4 - __mh_execute_header
+  10:        0x1040d11c4 - __mh_execute_header
+  11:        0x1040f762c - __mh_execute_header
+  12:        0x1040c2f74 - __mh_execute_header
+  13:        0x104123b10 - __mh_execute_header
+
+thread 'main' (2148851) panicked at src/pty.rs:120:37:
+Failed to exec: ENOENT
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'main' (2148851) panicked at /Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.49.0/src/runtime/io/driver.rs:260:27:
+failed to wake I/O driver: Os { code: 9, kind: Uncategorized, message: "Bad file descriptor" }
+stack backtrace:
+   0:        0x101117e9c - __mh_execute_header
+   1:        0x10106c204 - __mh_execute_header
+   2:        0x101116528 - __mh_execute_header
+   3:        0x1011161d0 - __mh_execute_header
+   4:        0x101135cc0 - __mh_execute_header
+   5:        0x101135c7c - __mh_execute_header
+   6:        0x101135c70 - __mh_execute_header
+   7:        0x10116b318 - __mh_execute_header
+   8:        0x10116b5fc - __mh_execute_header
+   9:        0x101145ba4 - __mh_execute_header
+  10:        0x100fd11c4 - __mh_execute_header
+  11:        0x100ff762c - __mh_execute_header
+  12:        0x100fc2f74 - __mh_execute_header
+  13:        0x101023b10 - __mh_execute_header
+[2J[3J[H[?2026h[38;5;174mWelcome[1Cto[1CClaude[1CCode[1C[38;5;246mv2.1.32[39m
+…………………………………………………………………………………………………………………………………………………………
+
+[5C*[39C█████▓▓░
+[33C*[9C███▓░[5C░░
+[12C░░░░░░[24C███▓░
+[4C░░░[3C░░░░░░░░░░[22C███▓░
+[3C░░░░░░░░░░░░░░░░░░░[4C[1m*[16C[22m██▓░░[6C▓
+[45C░▓▓███▓▓░
+[1C[38;5;246m*[33C░░░░[39m
+[33C[38;5;246m░░░░░░░░[39m
+[31C[38;5;246m░░░░░░░░░░░░░░░░[39m
+[7C[38;5;174m█████████[40C[38;5;246m*[39m
+[6C[38;5;174m██▄█████▄██[24C[39m[1m*[22m
+[7C[38;5;174m█████████[6C[39m*
+…………………[38;5;174m█[1C█[3C█[1C█[39m………………………………………………………………………………………………………………
+
+[?2026l[?2004h[?1004h[?25l[?2026h[1CLet's[1Cget[1Cstarted.
+
+[1C[1mChoose[1Cthe[1Ctext[1Cstyle[1Cthat[1Clooks[1Cbest[1Cwith[1Cyour[1Cterminal[22m
+[1C[38;5;246mTo[1Cchange[1Cthis[1Clater,[1Crun[1C/theme[39m
+
+[1C[38;5;153m❯[1C[38;5;246m1.[1C[38;5;114mDark[1Cmode[1C✔[39m
+[3C[38;5;246m2.[1C[39mLight[1Cmode
+[3C[38;5;246m3.[1C[39mDark[1Cmode[1C(colorblind-friendly)
+[3C[38;5;246m4.[1C[39mLight[1Cmode[1C(colorblind-friendly)
+[3C[38;5;246m5.[1C[39mDark[1Cmode[1C(ANSI[1Ccolors[1Conly)
+[3C[38;5;246m6.[1C[39mLight[1Cmode[1C(ANSI[1Ccolors[1Conly)
+
+[2m[38;5;239m╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌[39m[22m
+[1C[38;5;246m1[2C[38;5;231mfunction[1Cgreet()[1C{[39m
+[48;5;95m[38;5;231m 2 -  console.log("Hello, [48;5;174mWorld[48;5;95m!");                                             [39m[49m
+[48;5;65m[38;5;231m 2 +  console.log("Hello, [48;5;72mClaude[48;5;65m!");                                            [39m[49m
+[1C[38;5;246m3[2C[38;5;231m}[39m
+[2m[38;5;239m╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌[39m[22m
+[1C[38;5;246mSyntax[1Chighlighting[1Cavailable[1Conly[1Cin[1Cnative[1Cbuild[39m
+[?2026l[?2026h[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[G[1A[1C[12A     [1C   [1C        [1C[1B[1mClaude Code can be used with your Claude subscription or billed based on API [1C[1Busage through your Console[1Caccount.[22m                     [1C[1B                                [1C[1BSelect[1Clogin[1Cmethod:[1C[1B [1C            [1C [1C[1B[38;5;153m❯[1C[38;5;246m1[2C[38;5;153mClaude account with subscription · [38;5;246mPro, Max, Team, or Enterprise[3C[1B[39m       [1C    [1C                     [3C[1B[38;5;246m2[2C[39mAnt[1Cropic Console account · [38;5;246mAPI usage billing[3C[1B[39m       [1C    [1C     [1C      [1C     [3C[1B[38;5;246m3[2C[39m3rd-party platform · [38;5;246mAmazon Bedrock, Microsoft Foundry, or Vertex AI[2B[39m                                                                                [1B                                                                                [1B                                                                                [1B                                                                                [1B                                                                                [1B                                                                                [1B                                                                                [6A[?2026l[?2026h[2J[3J[H[38;5;174mWelcome[1Cto[1CClaude[1CCode[1C[38;5;246mv2.1.32[39m
+…………………………………………………………………………………………………………………………………………………………
+
+[5C*[39C█████▓▓░
+[33C*[9C███▓░[5C░░
+[12C░░░░░░[24C███▓░
+[4C░░░[3C░░░░░░░░░░[22C███▓░
+[3C░░░░░░░░░░░░░░░░░░░[4C[1m*[16C[22m██▓░░[6C▓
+[45C░▓▓███▓▓░
+[1C[38;5;246m*[33C░░░░[39m
+[33C[38;5;246m░░░░░░░░[39m
+[31C[38;5;246m░░░░░░░░░░░░░░░░[39m
+[7C[38;5;174m█████████[40C[38;5;246m*[39m
+[6C[38;5;174m██▄█████▄██[24C[39m[1m*[22m
+[7C[38;5;174m█████████[6C[39m*
+…………………[38;5;174m█[1C█[3C█[1C█[39m………………………………………………………………………………………………………………
+
+[?2026l[?2026h[1C[38;5;231m·[1C[39mOpening[1Cbrowser[1Cto[1Csign[1Cin…
+[?2026l[?2026h[1C[1A[38;5;231m✢[39m
+[?2026l[?2026h[1C[1A[38;5;231m✳[39m
+[?2026l[?2026h[1C[1A[38;5;231m✶[39m
+[?2026l[?2026h[1C[1A[38;5;231m✻[39m
+[?2026l[?2026h[1C[1A[38;5;231m✽[39m
+[?2026l[?2026h[1C[1A[38;5;231m✻[39m
+[?2026l[?2026h[1C[1A[38;5;231m✳[39m
+[?2026l[?2026h[1C[1A[38;5;231m✢[39m
+[?2026l[?2026h[1C[1A[38;5;231m·[39m
+[?2026l[?2026h[1C[1A[38;5;231m✢[39m
+[?2026l[?2026h[1C[1A[38;5;231m✳[39m
+[?2026l[?2026h[1C[1A[38;5;231m✶[39m
+[?2026l[?2026h[1C[1A[38;5;231m✻[39m
+[?2026l[?2026h[1C[1A[38;5;231m✽[39m
+[?2026l[?2026h[1C[1A[38;5;231m✻[39m
+[?2026l[?2026h[1C[1A[38;5;231m✶[39m
+[?2026l[?2026h[1C[1A[38;5;231m✢[39m
+[?2026l[?2026h[1C[1A[38;5;231m·[39m
+[?2026l[?2026h[1C[1A[38;5;246mBrowser didn't open? Use the url below to sign in (c to copy)[39m
+
+[38;5;246mhttps://claude.ai/oauth/authorize?code=true&client_id=9d1c250a-e61b-44d9-88ed-59[39m
+[38;5;246m44d1962f5e&response_type=code&redirect_uri=https%3A%2F%2Fplatform.claude.com%2Fo[39m
+[38;5;246mauth%2Fcode%2Fcallback&scope=org%3Acreate_api_key+user%3Aprofile+user%3Ainferenc[39m
+[38;5;246me+user%3Asessions%3Aclaude_code+user%3Amcp_servers&code_challenge=mhEsoYk_MiLEro[39m
+[38;5;246mZWXaGallp0t7rYAZw00fAkoW0aaZo&code_challenge_method=S256&state=NnJMJzSDgPszKJdnC[39m
+[38;5;246m5SD8gEKH9OgXj8Ah7YmhikRbMY[39m
+
+
+[1CPaste[1Ccode[1Chere[1Cif[1Cprompted[1C>
+[?2026l[?2026h[2J[3J[H[38;5;174mWelcome[1Cto[1CClaude[1CCode[1C[38;5;246mv2.1.32[39m
+…………………………………………………………………………………………………………………………………………………………
+
+[5C*[39C█████▓▓░
+[33C*[9C███▓░[5C░░
+[12C░░░░░░[24C███▓░
+[4C░░░[3C░░░░░░░░░░[22C███▓░
+[3C░░░░░░░░░░░░░░░░░░░[4C[1m*[16C[22m██▓░░[6C▓
+[45C░▓▓███▓▓░
+[1C[38;5;246m*[33C░░░░[39m
+[33C[38;5;246m░░░░░░░░[39m
+[31C[38;5;246m░░░░░░░░░░░░░░░░[39m
+[7C[38;5;174m█████████[40C[38;5;246m*[39m
+[6C[38;5;174m██▄█████▄██[24C[39m[1m*[22m
+[7C[38;5;174m█████████[6C[39m*
+…………………[38;5;174m█[1C█[3C█[1C█[39m………………………………………………………………………………………………………………
+
+[1C[38;5;211mOAuth[1Cerror:[1CInvalid[1Ccode.[1CPlease[1Cmake[1Csure[1Cthe[1Cfull[1Ccode[1Cwas[1Ccopied[39m
+
+
+[1C[38;5;153mPress[1C[1mEnter[1C[22mto[1Cretry.[39m
+[?2026l[?2026h[2K[1A[2K[1A[2K[G[1A[1C[1A[38;5;153mRetrying…[39m                                                           [1B                                                                                [1B                                                                                [1B                                                                                [2A[?2026l[?2026h[1C[1A[38;5;246mBrowser didn't open? Use the url below to sign in (c to copy)[39m
+
+[38;5;246mhttps://claude.ai/oauth/authorize?code=true&client_id=9d1c250a-e61b-44d9-88ed-59[39m
+[38;5;246m44d1962f5e&response_type=code&redirect_uri=https%3A%2F%2Fplatform.claude.com%2Fo[39m
+[38;5;246mauth%2Fcode%2Fcallback&scope=org%3Acreate_api_key+user%3Aprofile+user%3Ainferenc[39m
+[38;5;246me+user%3Asessions%3Aclaude_code+user%3Amcp_servers&code_challenge=mhEsoYk_MiLEro[39m
+[38;5;246mZWXaGallp0t7rYAZw00fAkoW0aaZo&code_challenge_method=S256&state=NnJMJzSDgPszKJdnC[39m
+[38;5;246m5SD8gEKH9OgXj8Ah7YmhikRbMY[39m
+
+
+[1CPaste[1Ccode[1Chere[1Cif[1Cprompted[1C>
+[?2026l[?2026h[2J[3J[H[38;5;174mWelcome[1Cto[1CClaude[1CCode[1C[38;5;246mv2.1.32[39m
+…………………………………………………………………………………………………………………………………………………………
+
+[5C*[39C█████▓▓░
+[33C*[9C███▓░[5C░░
+[12C░░░░░░[24C███▓░
+[4C░░░[3C░░░░░░░░░░[22C███▓░
+[3C░░░░░░░░░░░░░░░░░░░[4C[1m*[16C[22m██▓░░[6C▓
+[45C░▓▓███▓▓░
+[1C[38;5;246m*[33C░░░░[39m
+[33C[38;5;246m░░░░░░░░[39m
+[31C[38;5;246m░░░░░░░░░░░░░░░░[39m
+[7C[38;5;174m█████████[40C[38;5;246m*[39m
+[6C[38;5;174m██▄█████▄██[24C[39m[1m*[22m
+[7C[38;5;174m█████████[6C[39m*
+…………………[38;5;174m█[1C█[3C█[1C█[39m………………………………………………………………………………………………………………
+
+[1C[38;5;211mOAuth[1Cerror:[1CInvalid[1Ccode.[1CPlease[1Cmake[1Csure[1Cthe[1Cfull[1Ccode[1Cwas[1Ccopied[39m
+
+
+[1C[38;5;153mPress[1C[1mEnter[1C[22mto[1Cretry.[39m
+[?2026l2026-02-06T00:21:21.320Z [relay-pty-orchestrator:Lead] ERROR:  SIGKILL DETECTED - gathering diagnostics:
+  Memory: 266MB free / 8192MB total (97% used)
+  relay-pty processes: 3
+  Killed process PID: 58340
+  Agent name: Lead
+  Timestamp: 2026-02-06T00:21:21.320Z
