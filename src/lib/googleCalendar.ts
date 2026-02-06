@@ -118,9 +118,26 @@ export const signInWithGoogle = (): Promise<string> => {
     let settled = false;
 
     try {
+      // Clear any existing token first to ensure fresh auth
+      const existingToken = localStorage.getItem('google_access_token');
+      if (existingToken) {
+        console.log('[Google OAuth] Revoking existing token before re-auth...');
+        try {
+          window.google.accounts.oauth2.revoke(existingToken, () => {
+            console.log('[Google OAuth] Previous token revoked');
+          });
+        } catch (e) {
+          console.log('[Google OAuth] Could not revoke token (may already be invalid)');
+        }
+        localStorage.removeItem('google_access_token');
+        localStorage.removeItem('gmail_tokens');
+      }
+
       const client = window.google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
         scope: SCOPES,
+        // Force showing the consent screen to ensure callback fires properly
+        prompt: 'consent',
         callback: (response: { access_token?: string; error?: string; error_description?: string; expires_in?: number }) => {
           console.log('[Google OAuth] Callback received:', {
             hasAccessToken: !!response.access_token,
@@ -335,11 +352,13 @@ declare global {
           initTokenClient: (config: {
             client_id: string;
             scope: string;
+            prompt?: string;
             callback: (response: { access_token?: string; error?: string; error_description?: string; expires_in?: number }) => void;
             error_callback?: (error: { type: string; message?: string }) => void;
           }) => {
             requestAccessToken: () => void;
           };
+          revoke: (token: string, callback: () => void) => void;
         };
       };
     };
