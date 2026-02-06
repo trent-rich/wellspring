@@ -20,6 +20,7 @@ import { GEODE_GOOGLE_DRIVE_FOLDER } from '../types/geode';
 
 // Use Supabase Edge Function as proxy to avoid CORS issues
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const SLACK_PROXY_URL = `${SUPABASE_URL}/functions/v1/slack-proxy`;
 
 interface SlackConfig {
@@ -46,6 +47,7 @@ class SlackClient {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
         method,

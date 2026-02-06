@@ -4,6 +4,7 @@ import type { TaskType } from '../types';
 
 // Use Supabase Edge Function to keep API key server-side
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const AI_EXTRACT_URL = `${SUPABASE_URL}/functions/v1/ai-extract-tasks`;
 
 export interface ExtractedTask {
@@ -37,6 +38,7 @@ export async function extractTasksFromEmail(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
         subject: email.subject,
