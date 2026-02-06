@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Google OAuth Test</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <h1>Google OAuth Test</h1>
+  <button id="authBtn" onclick="authenticate()">Authenticate with Google</button>
+  <pre id="output"></pre>
+
+  <script>
+    const CLIENT_ID = '888136833202-81oi811u43obkgnqrgqc1meajnvk8fns.apps.googleusercontent.com';
+    const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/drive.file';
+
+    function log(msg) {
+      console.log(msg);
+      document.getElementById('output').textContent += msg + '\n';
+    }
+
+    function authenticate() {
+      log('Starting authentication...');
+      log('Client ID: ' + CLIENT_ID.substring(0, 20) + '...');
+      log('Scopes: ' + SCOPES);
+
+      if (!window.google) {
+        log('ERROR: Google Identity Services not loaded');
+        return;
+      }
+
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        prompt: 'consent',
+        callback: (response) => {
+          log('=== CALLBACK FIRED ===');
+          log('Response: ' + JSON.stringify(response, null, 2));
+          if (response.access_token) {
+            log('SUCCESS! Token: ' + response.access_token.substring(0, 20) + '...');
+          }
+          if (response.error) {
+            log('ERROR: ' + response.error + ' - ' + response.error_description);
+          }
+        },
+        error_callback: (error) => {
+          log('=== ERROR_CALLBACK FIRED ===');
+          log('Error: ' + JSON.stringify(error, null, 2));
+        }
+      });
+
+      log('Requesting access token...');
+      client.requestAccessToken();
+    }
+  </script>
+</body>
+</html>
