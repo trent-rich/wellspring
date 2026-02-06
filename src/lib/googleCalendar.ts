@@ -114,6 +114,9 @@ export const signInWithGoogle = (): Promise<string> => {
     console.log('[Google OAuth] Client ID:', GOOGLE_CLIENT_ID.substring(0, 20) + '...');
     console.log('[Google OAuth] Scopes:', SCOPES);
 
+    // Track if we've already resolved/rejected to handle race between callback and error_callback
+    let settled = false;
+
     try {
       const client = window.google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
@@ -125,14 +128,21 @@ export const signInWithGoogle = (): Promise<string> => {
             errorDescription: response.error_description,
           });
 
+          if (settled) {
+            console.log('[Google OAuth] Already settled, ignoring callback');
+            return;
+          }
+
           if (response.error) {
             console.error('[Google OAuth] Error from Google:', response.error, response.error_description);
+            settled = true;
             reject(new Error(`${response.error}: ${response.error_description || 'Unknown error'}`));
             return;
           }
 
           if (response.access_token) {
             console.log('[Google OAuth] Access token received successfully');
+            settled = true;
             accessToken = response.access_token;
             // Store in localStorage for persistence
             localStorage.setItem('google_access_token', response.access_token);
@@ -150,13 +160,30 @@ export const signInWithGoogle = (): Promise<string> => {
           } else {
             // No token and no error - user likely closed the popup
             console.warn('[Google OAuth] No access token and no error - user may have closed popup');
+            settled = true;
             reject(new Error('Authentication was cancelled or failed'));
           }
         },
         error_callback: (error: { type: string; message?: string }) => {
           // This callback handles popup blocked, closed, etc.
-          console.error('[Google OAuth] Error callback:', error);
-          reject(new Error(`Google OAuth error: ${error.type} - ${error.message || 'Unknown error'}`));
+          // IMPORTANT: popup_closed can fire AFTER successful auth when the popup closes
+          // So we only reject if we haven't already received a token
+          console.log('[Google OAuth] Error callback:', error);
+
+          if (settled) {
+            console.log('[Google OAuth] Already settled (likely success), ignoring error_callback');
+            return;
+          }
+
+          // Give the success callback a moment to fire first
+          // Google sometimes fires error_callback before callback on success
+          setTimeout(() => {
+            if (!settled) {
+              console.error('[Google OAuth] Error confirmed:', error);
+              settled = true;
+              reject(new Error(`Google OAuth error: ${error.type} - ${error.message || 'Unknown error'}`));
+            }
+          }, 500);
         },
       });
 
