@@ -121,6 +121,7 @@ export const signInWithGoogle = (): Promise<string> => {
       const client = window.google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
         scope: SCOPES,
+        prompt: 'consent',  // Required to ensure callback fires (proven by /oauth-test.html)
         callback: (response: { access_token?: string; error?: string; error_description?: string; expires_in?: number }) => {
           console.log('[Google OAuth] Callback received:', {
             hasAccessToken: !!response.access_token,
