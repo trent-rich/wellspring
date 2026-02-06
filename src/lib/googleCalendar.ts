@@ -15,18 +15,57 @@ let accessToken: string | null = null;
 // Initialize Google Identity Services
 export const initGoogleAuth = (): Promise<void> => {
   return new Promise((resolve, reject) => {
+    console.log('[Google OAuth] Initializing Google Auth...');
+
     if (!GOOGLE_CLIENT_ID) {
-      reject(new Error('Google Client ID not configured'));
+      console.error('[Google OAuth] VITE_GOOGLE_CLIENT_ID is not set');
+      reject(new Error('Google Client ID not configured. Please check your environment variables.'));
+      return;
+    }
+
+    // Check if already loaded
+    if (window.google?.accounts?.oauth2) {
+      console.log('[Google OAuth] Google Identity Services already loaded');
+      resolve();
+      return;
+    }
+
+    // Check if script is already being loaded
+    const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    if (existingScript) {
+      console.log('[Google OAuth] Script already exists, waiting for load...');
+      // Wait for it to load
+      const checkLoaded = setInterval(() => {
+        if (window.google?.accounts?.oauth2) {
+          clearInterval(checkLoaded);
+          console.log('[Google OAuth] Google Identity Services loaded');
+          resolve();
+        }
+      }, 100);
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkLoaded);
+        if (!window.google?.accounts?.oauth2) {
+          reject(new Error('Timeout waiting for Google Identity Services to load'));
+        }
+      }, 10000);
       return;
     }
 
     // Load the Google Identity Services library
+    console.log('[Google OAuth] Loading Google Identity Services script...');
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Failed to load Google Identity Services'));
+    script.onload = () => {
+      console.log('[Google OAuth] Google Identity Services script loaded');
+      resolve();
+    };
+    script.onerror = (error) => {
+      console.error('[Google OAuth] Failed to load Google Identity Services:', error);
+      reject(new Error('Failed to load Google Identity Services. Please check your network connection.'));
+    };
     document.head.appendChild(script);
   });
 };
@@ -34,43 +73,75 @@ export const initGoogleAuth = (): Promise<void> => {
 // Start OAuth flow
 export const signInWithGoogle = (): Promise<string> => {
   return new Promise((resolve, reject) => {
+    console.log('[Google OAuth] Starting sign-in flow...');
+
     if (!window.google) {
+      console.error('[Google OAuth] Google Identity Services not loaded');
       reject(new Error('Google Identity Services not loaded'));
       return;
     }
 
     if (!GOOGLE_CLIENT_ID) {
+      console.error('[Google OAuth] Google Client ID not configured');
       reject(new Error('Google Client ID not configured'));
       return;
     }
 
-    const client = window.google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: SCOPES,
-      callback: (response: { access_token?: string; error?: string; expires_in?: number }) => {
-        if (response.error) {
-          reject(new Error(response.error));
-          return;
-        }
-        if (response.access_token) {
-          accessToken = response.access_token;
-          // Store in localStorage for persistence
-          localStorage.setItem('google_access_token', response.access_token);
+    console.log('[Google OAuth] Client ID:', GOOGLE_CLIENT_ID.substring(0, 20) + '...');
+    console.log('[Google OAuth] Scopes:', SCOPES);
 
-          // Also store in gmail_tokens format for Ralph AI / email processor
-          const expiresIn = response.expires_in || 3600; // Default 1 hour
-          const gmailTokens = {
-            accessToken: response.access_token,
-            expiresAt: Date.now() + (expiresIn * 1000),
-          };
-          localStorage.setItem('gmail_tokens', JSON.stringify(gmailTokens));
+    try {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: SCOPES,
+        callback: (response: { access_token?: string; error?: string; error_description?: string; expires_in?: number }) => {
+          console.log('[Google OAuth] Callback received:', {
+            hasAccessToken: !!response.access_token,
+            error: response.error,
+            errorDescription: response.error_description,
+          });
 
-          resolve(response.access_token);
-        }
-      },
-    });
+          if (response.error) {
+            console.error('[Google OAuth] Error from Google:', response.error, response.error_description);
+            reject(new Error(`${response.error}: ${response.error_description || 'Unknown error'}`));
+            return;
+          }
 
-    client.requestAccessToken();
+          if (response.access_token) {
+            console.log('[Google OAuth] Access token received successfully');
+            accessToken = response.access_token;
+            // Store in localStorage for persistence
+            localStorage.setItem('google_access_token', response.access_token);
+
+            // Also store in gmail_tokens format for Ralph AI / email processor
+            const expiresIn = response.expires_in || 3600; // Default 1 hour
+            const gmailTokens = {
+              accessToken: response.access_token,
+              expiresAt: Date.now() + (expiresIn * 1000),
+            };
+            localStorage.setItem('gmail_tokens', JSON.stringify(gmailTokens));
+            console.log('[Google OAuth] Tokens stored in localStorage');
+
+            resolve(response.access_token);
+          } else {
+            // No token and no error - user likely closed the popup
+            console.warn('[Google OAuth] No access token and no error - user may have closed popup');
+            reject(new Error('Authentication was cancelled or failed'));
+          }
+        },
+        error_callback: (error: { type: string; message?: string }) => {
+          // This callback handles popup blocked, closed, etc.
+          console.error('[Google OAuth] Error callback:', error);
+          reject(new Error(`Google OAuth error: ${error.type} - ${error.message || 'Unknown error'}`));
+        },
+      });
+
+      console.log('[Google OAuth] Requesting access token...');
+      client.requestAccessToken();
+    } catch (error) {
+      console.error('[Google OAuth] Exception during OAuth flow:', error);
+      reject(error instanceof Error ? error : new Error('Failed to initialize Google OAuth'));
+    }
   });
 };
 
@@ -213,7 +284,8 @@ declare global {
           initTokenClient: (config: {
             client_id: string;
             scope: string;
-            callback: (response: { access_token?: string; error?: string }) => void;
+            callback: (response: { access_token?: string; error?: string; error_description?: string; expires_in?: number }) => void;
+            error_callback?: (error: { type: string; message?: string }) => void;
           }) => {
             requestAccessToken: () => void;
           };
