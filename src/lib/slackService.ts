@@ -34,10 +34,10 @@ interface SlackConfig {
 // ============================================
 
 class SlackClient {
-  private botToken: string;
-
-  constructor(botToken: string) {
-    this.botToken = botToken;
+  // Bot token is now stored server-side in Supabase Edge Function secrets
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  constructor(_botToken?: string) {
+    // Token not needed client-side - Edge Function handles auth
   }
 
   private async apiCall<T>(method: string, body?: Record<string, unknown>): Promise<T> {
