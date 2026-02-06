@@ -27,17 +27,10 @@ interface GeodeEmailStoreState {
   confirmTask: (taskId: string, userId: string) => Promise<TaskExecutionResult | null>;
   dismissTask: (taskId: string, userId: string, reason?: string) => void;
 
-  // Task removal actions (for cleanup after execution)
-  removeTask: (taskId: string) => void;
-  removeTaskByAuthorName: (authorName: string) => void;
-  markTaskComplete: (taskId: string, userId: string) => void;
-  clearCompletedTasks: () => void;
-
   // Queries
   getPendingTasks: () => GeodeConfirmationTask[];
   getTasksByChapter: (state: string, chapterType: string) => GeodeConfirmationTask[];
   getHighPriorityTasks: () => GeodeConfirmationTask[];
-  findTaskByAuthorName: (authorName: string) => GeodeConfirmationTask | undefined;
 
   // Initialize with mock data
   initializeMockData: () => void;
@@ -143,48 +136,6 @@ export const useGeodeEmailStore = create<GeodeEmailStoreState>()(
         }));
       },
 
-      // Remove a task completely by ID
-      removeTask: (taskId) => {
-        set((state) => ({
-          confirmationTasks: state.confirmationTasks.filter((t) => t.id !== taskId),
-        }));
-      },
-
-      // Remove tasks by author name (case-insensitive partial match)
-      removeTaskByAuthorName: (authorName) => {
-        const lowerName = authorName.toLowerCase();
-        set((state) => ({
-          confirmationTasks: state.confirmationTasks.filter(
-            (t) => !t.authorName?.toLowerCase().includes(lowerName)
-          ),
-        }));
-      },
-
-      // Mark a task as complete (for tasks that have been executed)
-      markTaskComplete: (taskId, userId) => {
-        set((state) => ({
-          confirmationTasks: state.confirmationTasks.map((t) =>
-            t.id === taskId
-              ? {
-                  ...t,
-                  status: 'confirmed' as const,
-                  confirmedAt: new Date().toISOString(),
-                  confirmedBy: userId,
-                }
-              : t
-          ),
-        }));
-      },
-
-      // Clear all completed/confirmed tasks
-      clearCompletedTasks: () => {
-        set((state) => ({
-          confirmationTasks: state.confirmationTasks.filter(
-            (t) => t.status === 'pending'
-          ),
-        }));
-      },
-
       getPendingTasks: () => {
         return get().confirmationTasks.filter((t) => t.status === 'pending');
       },
@@ -198,14 +149,6 @@ export const useGeodeEmailStore = create<GeodeEmailStoreState>()(
       getHighPriorityTasks: () => {
         return get().confirmationTasks.filter(
           (t) => (t.priority === 'urgent' || t.priority === 'high') && t.status === 'pending'
-        );
-      },
-
-      // Find a task by author name (case-insensitive partial match)
-      findTaskByAuthorName: (authorName) => {
-        const lowerName = authorName.toLowerCase();
-        return get().confirmationTasks.find(
-          (t) => t.authorName?.toLowerCase().includes(lowerName)
         );
       },
 
