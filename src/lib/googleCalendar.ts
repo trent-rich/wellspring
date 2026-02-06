@@ -94,16 +94,71 @@ export const initGoogleAuth = (): Promise<void> => {
   });
 };
 
-// Cached token client to prevent multiple initializations
-// This is crucial for React StrictMode which calls functions twice
-let tokenClient: { requestAccessToken: () => void } | null = null;
+// OAuth state management - DO NOT cache tokenClient (causes callback issues in React)
 let pendingResolve: ((token: string) => void) | null = null;
 let pendingReject: ((error: Error) => void) | null = null;
 let isOAuthInProgress = false;
 
+// Module-level callback handler - ensures callback fires correctly even in bundled code
+const handleOAuthResponse = (response: { access_token?: string; error?: string; error_description?: string; expires_in?: number }) => {
+  console.log('[Google OAuth] Callback received:', {
+    hasAccessToken: !!response.access_token,
+    error: response.error,
+    errorDescription: response.error_description,
+  });
+
+  isOAuthInProgress = false;
+
+  if (response.error) {
+    console.error('[Google OAuth] Error from Google:', response.error, response.error_description);
+    if (pendingReject) {
+      pendingReject(new Error(`${response.error}: ${response.error_description || 'Unknown error'}`));
+      pendingReject = null;
+      pendingResolve = null;
+    }
+    return;
+  }
+
+  if (response.access_token) {
+    console.log('[Google OAuth] Access token received successfully');
+    accessToken = response.access_token;
+    // Store in localStorage for persistence
+    localStorage.setItem('google_access_token', response.access_token);
+
+    // Also store in gmail_tokens format for Ralph AI / email processor
+    const expiresIn = response.expires_in || 3600; // Default 1 hour
+    const gmailTokens = {
+      accessToken: response.access_token,
+      expiresAt: Date.now() + (expiresIn * 1000),
+    };
+    localStorage.setItem('gmail_tokens', JSON.stringify(gmailTokens));
+    console.log('[Google OAuth] Tokens stored in localStorage');
+
+    if (pendingResolve) {
+      pendingResolve(response.access_token);
+      pendingResolve = null;
+      pendingReject = null;
+    }
+  } else {
+    // No token and no error - shouldn't happen but handle it
+    console.warn('[Google OAuth] No access token and no error');
+    if (pendingReject) {
+      pendingReject(new Error('Authentication failed - no token received'));
+      pendingReject = null;
+      pendingResolve = null;
+    }
+  }
+};
+
+// Module-level error callback - logs but doesn't reject (fires on popup close too)
+const handleOAuthError = (error: { type: string; message?: string }) => {
+  console.log('[Google OAuth] error_callback fired (this is normal):', error);
+  // We ignore this - the success callback is what matters
+};
+
 // Start OAuth flow
-// IMPORTANT: We cache the token client to prevent issues with React StrictMode
-// calling this multiple times. Only one OAuth flow can be in progress at a time.
+// IMPORTANT: Create a FRESH token client each time (like the working test page does)
+// Caching the token client breaks the callback in React's bundled environment
 export const signInWithGoogle = (): Promise<string> => {
   return new Promise((resolve, reject) => {
     console.log('[Google OAuth] Starting sign-in flow...');
@@ -138,71 +193,17 @@ export const signInWithGoogle = (): Promise<string> => {
     isOAuthInProgress = true;
 
     try {
-      // Create token client only once, reuse if already created
-      if (!tokenClient) {
-        console.log('[Google OAuth] Creating new token client...');
-        tokenClient = window.google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_CLIENT_ID,
-          scope: SCOPES,
-          prompt: 'consent',  // Required to ensure callback fires (proven by /oauth-test.html)
-          callback: (response: { access_token?: string; error?: string; error_description?: string; expires_in?: number }) => {
-            console.log('[Google OAuth] Callback received:', {
-              hasAccessToken: !!response.access_token,
-              error: response.error,
-              errorDescription: response.error_description,
-            });
-
-            isOAuthInProgress = false;
-
-            if (response.error) {
-              console.error('[Google OAuth] Error from Google:', response.error, response.error_description);
-              if (pendingReject) {
-                pendingReject(new Error(`${response.error}: ${response.error_description || 'Unknown error'}`));
-                pendingReject = null;
-                pendingResolve = null;
-              }
-              return;
-            }
-
-            if (response.access_token) {
-              console.log('[Google OAuth] Access token received successfully');
-              accessToken = response.access_token;
-              // Store in localStorage for persistence
-              localStorage.setItem('google_access_token', response.access_token);
-
-              // Also store in gmail_tokens format for Ralph AI / email processor
-              const expiresIn = response.expires_in || 3600; // Default 1 hour
-              const gmailTokens = {
-                accessToken: response.access_token,
-                expiresAt: Date.now() + (expiresIn * 1000),
-              };
-              localStorage.setItem('gmail_tokens', JSON.stringify(gmailTokens));
-              console.log('[Google OAuth] Tokens stored in localStorage');
-
-              if (pendingResolve) {
-                pendingResolve(response.access_token);
-                pendingResolve = null;
-                pendingReject = null;
-              }
-            } else {
-              // No token and no error - shouldn't happen but handle it
-              console.warn('[Google OAuth] No access token and no error');
-              if (pendingReject) {
-                pendingReject(new Error('Authentication failed - no token received'));
-                pendingReject = null;
-                pendingResolve = null;
-              }
-            }
-          },
-          error_callback: (error: { type: string; message?: string }) => {
-            // Log but DO NOT reject - this fires even on success when popup closes
-            console.log('[Google OAuth] error_callback fired (this is normal):', error);
-            // We ignore this - the success callback is what matters
-          },
-        });
-      } else {
-        console.log('[Google OAuth] Reusing existing token client');
-      }
+      // Create FRESH token client each time - this is crucial!
+      // The test page works because it creates a new client each time.
+      // Caching breaks the callback reference in bundled code.
+      console.log('[Google OAuth] Creating fresh token client...');
+      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: SCOPES,
+        prompt: 'consent',
+        callback: handleOAuthResponse,
+        error_callback: handleOAuthError,
+      });
 
       console.log('[Google OAuth] Requesting access token...');
       tokenClient.requestAccessToken();
