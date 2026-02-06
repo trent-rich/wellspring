@@ -17,8 +17,9 @@ function getIntegrationsConfig(): IntegrationsConfig {
   const mondayToken = import.meta.env.VITE_MONDAY_API_TOKEN;
   const mondayBoardId = import.meta.env.VITE_MONDAY_GEODE_BOARD_ID;
 
-  const slackToken = import.meta.env.VITE_SLACK_BOT_TOKEN;
-  const slackSecret = import.meta.env.VITE_SLACK_SIGNING_SECRET;
+  // Slack token is now stored server-side in Supabase Edge Function secrets
+  // We just need Supabase URL to proxy through the Edge Function
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const slackChannel = import.meta.env.VITE_SLACK_DEFAULT_CHANNEL_ID;
 
   return {
@@ -27,9 +28,10 @@ function getIntegrationsConfig(): IntegrationsConfig {
       workspaceId: 'projectinnerspace', // From your Monday.com URL
       geodeBoardId: mondayBoardId,
     } : null,
-    slack: slackToken && slackSecret ? {
-      botToken: slackToken,
-      signingSecret: slackSecret,
+    // Slack is enabled if Supabase URL is configured (Edge Function handles auth)
+    slack: supabaseUrl ? {
+      botToken: '', // Not needed client-side - Edge Function handles auth
+      signingSecret: '', // Not needed client-side
       defaultChannelId: slackChannel || '',
       mariaUserId: '', // Will be configured in settings
     } : null,
