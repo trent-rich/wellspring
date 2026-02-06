@@ -30,13 +30,23 @@ import {
   getRalphStats,
   clearRalphData,
 } from '../lib/emailProcessor';
-import { isAnthropicConfigured } from '../lib/taskExtractor';
 import {
   getIntegrationStatus,
   getMondayService,
   getSlackService,
   type IntegrationStatus,
 } from '../lib/integrations';
+import {
+  getActionProviders,
+  setProviderForAction,
+  resetToDefaultProviders,
+  getAvailableProviders,
+  getAvailableActions,
+  isAIConfigured,
+  type AIProvider,
+  type AIAction,
+  type ActionProviderConfig,
+} from '../lib/aiService';
 
 export default function SettingsPage() {
   const { user, updateProfile } = useAuthStore();
@@ -62,6 +72,11 @@ export default function SettingsPage() {
   const [integrationStatus, setIntegrationStatus] = useState<IntegrationStatus>(getIntegrationStatus());
   const [isMondayTesting, setIsMondayTesting] = useState(false);
   const [isSlackTesting, setIsSlackTesting] = useState(false);
+
+  // AI Provider state - per-action configuration
+  const [actionProviders, setActionProvidersState] = useState<ActionProviderConfig>(getActionProviders());
+  const availableProviders = getAvailableProviders();
+  const availableActions = getAvailableActions();
 
   // Profile form state
   const [fullName, setFullName] = useState(user?.full_name || '');
@@ -114,6 +129,16 @@ export default function SettingsPage() {
   const handleToggleAutoSync = (enabled: boolean) => {
     setAutoSyncEnabled(enabled);
     localStorage.setItem('ralph_auto_sync', enabled ? 'true' : 'false');
+  };
+
+  const handleActionProviderChange = (action: AIAction, provider: AIProvider) => {
+    setProviderForAction(action, provider);
+    setActionProvidersState(getActionProviders());
+  };
+
+  const handleResetToDefaults = () => {
+    resetToDefaultProviders();
+    setActionProvidersState(getActionProviders());
   };
 
   const handleManualRalphSync = async () => {
@@ -444,22 +469,22 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Anthropic Integration (Ralph AI) */}
+          {/* AI Assistant (Ralph) */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className={cn(
                   'p-2 rounded-lg',
-                  isAnthropicConfigured() ? 'bg-purple-100' : 'bg-gray-100'
+                  isAIConfigured() ? 'bg-purple-100' : 'bg-gray-100'
                 )}>
                   <Bot className={cn(
                     'w-5 h-5',
-                    isAnthropicConfigured() ? 'text-purple-600' : 'text-gray-400'
+                    isAIConfigured() ? 'text-purple-600' : 'text-gray-400'
                   )} />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">Anthropic Integration</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Ralph AI Assistant</h2>
               </div>
-              {isAnthropicConfigured() ? (
+              {isAIConfigured() ? (
                 <span className="flex items-center text-sm text-green-600">
                   <Check className="w-4 h-4 mr-1" />
                   Connected
@@ -469,8 +494,53 @@ export default function SettingsPage() {
               )}
             </div>
             <p className="text-gray-500 mb-4">
-              Powers Ralph AI for automatic email task extraction. Requires Google to be connected.
+              Powers Ralph AI for automatic email task extraction, prioritization, and artifact creation.
             </p>
+
+            {/* AI Provider Selection - Per Action */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-medium text-gray-700">
+                  AI Providers by Task
+                </label>
+                <button
+                  onClick={handleResetToDefaults}
+                  className="text-xs text-purple-600 hover:text-purple-700"
+                >
+                  Reset to defaults
+                </button>
+              </div>
+              <div className="space-y-3">
+                {availableActions.map((action) => (
+                  <div key={action.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 text-sm">{action.name}</p>
+                      <p className="text-xs text-gray-500">{action.description}</p>
+                    </div>
+                    <div className="flex gap-1 ml-4">
+                      {availableProviders.map((provider) => (
+                        <button
+                          key={provider.id}
+                          onClick={() => handleActionProviderChange(action.id, provider.id)}
+                          className={cn(
+                            'px-3 py-1.5 text-xs font-medium rounded-md transition-all',
+                            actionProviders[action.id] === provider.id
+                              ? 'bg-purple-500 text-white'
+                              : 'bg-white text-gray-600 border border-gray-200 hover:border-purple-300'
+                          )}
+                          title={provider.description}
+                        >
+                          {provider.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-3">
+                Each task type uses the AI best suited for it. Defaults: Claude for extraction &amp; artifacts, GPT-4 for prioritization, Gemini for voice.
+              </p>
+            </div>
 
             {isRalphReady().ready ? (
               <>
@@ -578,8 +648,8 @@ export default function SettingsPage() {
                 <p className="text-sm text-amber-800 font-medium mb-1">Requirements:</p>
                 <ul className="text-sm text-amber-700 list-disc list-inside space-y-1">
                   {!googleConnected && <li>Connect Google (above)</li>}
-                  {!isAnthropicConfigured() && (
-                    <li>Deploy ai-extract-tasks Edge Function in Supabase</li>
+                  {!isAIConfigured() && (
+                    <li>Configure AI service in Supabase</li>
                   )}
                 </ul>
               </div>

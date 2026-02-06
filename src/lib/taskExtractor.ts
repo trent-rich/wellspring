@@ -1,11 +1,7 @@
-// AI Task Extractor - Uses Supabase Edge Function to extract actionable tasks from emails
+// AI Task Extractor - Uses unified AI service to extract actionable tasks from emails
 import type { ParsedEmail } from '../types/gmail';
 import type { TaskType } from '../types';
-
-// Use Supabase Edge Function to keep API key server-side
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const AI_EXTRACT_URL = `${SUPABASE_URL}/functions/v1/ai-extract-tasks`;
+import { callAI, isAIConfigured as checkAIConfigured } from './aiService';
 
 export interface ExtractedTask {
   title: string;
@@ -28,40 +24,35 @@ export interface TaskExtractionResult {
 }
 
 /**
- * Extract tasks from a single email using Edge Function
+ * Extract tasks from a single email using unified AI service
  */
 export async function extractTasksFromEmail(
   email: ParsedEmail
 ): Promise<TaskExtractionResult> {
   try {
-    const response = await fetch(AI_EXTRACT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
-        subject: email.subject,
-        body: email.body.slice(0, 4000),
-        from: `${email.from.name || email.from.email} <${email.from.email}>`,
-        date: email.date.toISOString(),
-      }),
+    const result = await callAI<{
+      tasks: ExtractedTask[];
+      requiresReply: boolean;
+      replyUrgency: 'none' | 'low' | 'medium' | 'high';
+      summary: string;
+    }>('extract_tasks', {
+      subject: email.subject,
+      body: email.body.slice(0, 4000),
+      from: `${email.from.name || email.from.email} <${email.from.email}>`,
+      date: email.date.toISOString(),
     });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(`AI extraction error: ${response.status} - ${error.error || response.statusText}`);
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'AI extraction failed');
     }
-
-    const parsed = await response.json();
 
     return {
       emailId: email.id,
       threadId: email.threadId,
-      tasks: parsed.tasks || [],
-      requiresReply: parsed.requiresReply || false,
-      replyUrgency: parsed.replyUrgency || 'none',
-      summary: parsed.summary || email.snippet,
+      tasks: result.data.tasks || [],
+      requiresReply: result.data.requiresReply || false,
+      replyUrgency: result.data.replyUrgency || 'none',
+      summary: result.data.summary || email.snippet,
     };
   } catch (error) {
     console.error('Task extraction error:', error);
@@ -152,6 +143,6 @@ function shouldSkipEmail(email: ParsedEmail): boolean {
  * Check if AI extraction is configured (Edge Function available)
  */
 export function isAnthropicConfigured(): boolean {
-  // Edge Function handles the API key, so we just need Supabase URL
-  return !!SUPABASE_URL;
+  // Use the unified AI service configuration check
+  return checkAIConfigured();
 }
