@@ -2,11 +2,20 @@
 // This module handles OAuth and calendar sync
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+// Scopes requested - these MUST match what's registered in Google Cloud Console
+// OAuth consent screen > Data Access > Scopes
 const SCOPES = [
+  // Calendar - read events for task scheduling
   'https://www.googleapis.com/auth/calendar.readonly',
+
+  // Gmail - read emails for task extraction, send emails directly (not just drafts)
   'https://www.googleapis.com/auth/gmail.readonly',
-  'https://www.googleapis.com/auth/gmail.compose',  // Required for creating drafts
-  'https://www.googleapis.com/auth/drive.file',     // Required for uploading files to Drive
+  'https://www.googleapis.com/auth/gmail.send',      // Send emails directly from Wellspring
+  'https://www.googleapis.com/auth/gmail.compose',   // Create drafts
+
+  // Drive - file access for artifacts and docs
+  'https://www.googleapis.com/auth/drive.file',
 ].join(' ');
 
 // Store the access token
@@ -59,8 +68,23 @@ export const initGoogleAuth = (): Promise<void> => {
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      console.log('[Google OAuth] Google Identity Services script loaded');
-      resolve();
+      console.log('[Google OAuth] Script loaded, waiting for window.google to be ready...');
+      // Wait for window.google to be fully initialized (can take a moment after script loads)
+      const waitForGoogle = setInterval(() => {
+        if (window.google?.accounts?.oauth2) {
+          clearInterval(waitForGoogle);
+          console.log('[Google OAuth] Google Identity Services fully ready');
+          resolve();
+        }
+      }, 50);
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        clearInterval(waitForGoogle);
+        if (!window.google?.accounts?.oauth2) {
+          console.error('[Google OAuth] window.google not available after script load');
+          reject(new Error('Google Identity Services failed to initialize'));
+        }
+      }, 5000);
     };
     script.onerror = (error) => {
       console.error('[Google OAuth] Failed to load Google Identity Services:', error);
