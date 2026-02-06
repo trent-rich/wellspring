@@ -95,6 +95,9 @@ export const initGoogleAuth = (): Promise<void> => {
 };
 
 // Start OAuth flow
+// IMPORTANT: We intentionally do NOT use error_callback because Google fires it
+// with 'popup_closed' even on successful auth when the popup closes normally.
+// The test page at /oauth-test.html proves the callback works correctly.
 export const signInWithGoogle = (): Promise<string> => {
   return new Promise((resolve, reject) => {
     console.log('[Google OAuth] Starting sign-in flow...');
@@ -114,30 +117,10 @@ export const signInWithGoogle = (): Promise<string> => {
     console.log('[Google OAuth] Client ID:', GOOGLE_CLIENT_ID.substring(0, 20) + '...');
     console.log('[Google OAuth] Scopes:', SCOPES);
 
-    // Track if we've already resolved/rejected to handle race between callback and error_callback
-    let settled = false;
-
     try {
-      // Clear any existing token first to ensure fresh auth
-      const existingToken = localStorage.getItem('google_access_token');
-      if (existingToken) {
-        console.log('[Google OAuth] Revoking existing token before re-auth...');
-        try {
-          window.google.accounts.oauth2.revoke(existingToken, () => {
-            console.log('[Google OAuth] Previous token revoked');
-          });
-        } catch (e) {
-          console.log('[Google OAuth] Could not revoke token (may already be invalid)');
-        }
-        localStorage.removeItem('google_access_token');
-        localStorage.removeItem('gmail_tokens');
-      }
-
       const client = window.google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
         scope: SCOPES,
-        // Force showing the consent screen to ensure callback fires properly
-        prompt: 'consent',
         callback: (response: { access_token?: string; error?: string; error_description?: string; expires_in?: number }) => {
           console.log('[Google OAuth] Callback received:', {
             hasAccessToken: !!response.access_token,
@@ -145,21 +128,14 @@ export const signInWithGoogle = (): Promise<string> => {
             errorDescription: response.error_description,
           });
 
-          if (settled) {
-            console.log('[Google OAuth] Already settled, ignoring callback');
-            return;
-          }
-
           if (response.error) {
             console.error('[Google OAuth] Error from Google:', response.error, response.error_description);
-            settled = true;
             reject(new Error(`${response.error}: ${response.error_description || 'Unknown error'}`));
             return;
           }
 
           if (response.access_token) {
             console.log('[Google OAuth] Access token received successfully');
-            settled = true;
             accessToken = response.access_token;
             // Store in localStorage for persistence
             localStorage.setItem('google_access_token', response.access_token);
@@ -175,33 +151,13 @@ export const signInWithGoogle = (): Promise<string> => {
 
             resolve(response.access_token);
           } else {
-            // No token and no error - user likely closed the popup
-            console.warn('[Google OAuth] No access token and no error - user may have closed popup');
-            settled = true;
-            reject(new Error('Authentication was cancelled or failed'));
+            // No token and no error - shouldn't happen but handle it
+            console.warn('[Google OAuth] No access token and no error');
+            reject(new Error('Authentication failed - no token received'));
           }
         },
-        error_callback: (error: { type: string; message?: string }) => {
-          // This callback handles popup blocked, closed, etc.
-          // IMPORTANT: popup_closed can fire AFTER successful auth when the popup closes
-          // So we only reject if we haven't already received a token
-          console.log('[Google OAuth] Error callback:', error);
-
-          if (settled) {
-            console.log('[Google OAuth] Already settled (likely success), ignoring error_callback');
-            return;
-          }
-
-          // Give the success callback a moment to fire first
-          // Google sometimes fires error_callback before callback on success
-          setTimeout(() => {
-            if (!settled) {
-              console.error('[Google OAuth] Error confirmed:', error);
-              settled = true;
-              reject(new Error(`Google OAuth error: ${error.type} - ${error.message || 'Unknown error'}`));
-            }
-          }, 500);
-        },
+        // NOTE: We intentionally omit error_callback because it fires 'popup_closed'
+        // even on successful auth, causing false errors. The success callback is reliable.
       });
 
       console.log('[Google OAuth] Requesting access token...');
