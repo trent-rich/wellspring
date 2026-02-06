@@ -157,8 +157,11 @@ export const signInWithGoogle = (): Promise<string> => {
             reject(new Error('Authentication failed - no token received'));
           }
         },
-        // NOTE: We intentionally omit error_callback because it fires 'popup_closed'
-        // even on successful auth, causing false errors. The success callback is reliable.
+        error_callback: (error: { type: string; message?: string }) => {
+          // Log but DO NOT reject - this fires even on success when popup closes
+          console.log('[Google OAuth] error_callback fired (this is normal):', error);
+          // We ignore this - the success callback is what matters
+        },
       });
 
       console.log('[Google OAuth] Requesting access token...');
