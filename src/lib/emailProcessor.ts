@@ -2,7 +2,6 @@
 import { fetchEmailsSinceLastSync, isGmailConnected } from './gmailService';
 import {
   extractTasksFromEmails,
-  getAnthropicApiKey,
   isAnthropicConfigured,
   type TaskExtractionResult,
 } from './taskExtractor';
@@ -143,9 +142,8 @@ export async function processEmails(
       return result;
     }
 
-    const apiKey = getAnthropicApiKey();
-    if (!apiKey) {
-      result.errors.push('Anthropic API key not configured. Please add VITE_ANTHROPIC_API_KEY to your environment.');
+    if (!isAnthropicConfigured()) {
+      result.errors.push('AI extraction not configured. Please check Supabase Edge Functions.');
       return result;
     }
 
@@ -171,10 +169,9 @@ export async function processEmails(
 
     onProgress?.(`Processing ${newEmails.length} emails...`, 10);
 
-    // Extract tasks from emails
+    // Extract tasks from emails via Edge Function
     const extractions = await extractTasksFromEmails(
       newEmails,
-      apiKey,
       (processed, total) => {
         const progress = 10 + (processed / total) * 60;
         onProgress?.(`Analyzing email ${processed}/${total}...`, progress);
