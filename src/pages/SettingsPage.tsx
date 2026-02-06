@@ -347,18 +347,21 @@ export default function SettingsPage() {
       {/* Integrations tab */}
       {activeTab === 'integrations' && (
         <div className="space-y-6">
+          {/* Google Integration */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Google Calendar</h2>
-              {googleConnected && (
+              <h2 className="text-lg font-semibold text-gray-900">Google Integration</h2>
+              {googleConnected ? (
                 <span className="flex items-center text-sm text-green-600">
                   <Check className="w-4 h-4 mr-1" />
                   Connected
                 </span>
+              ) : (
+                <span className="text-sm text-amber-600">Not Connected</span>
               )}
             </div>
             <p className="text-gray-500 mb-4">
-              Connect your Google Calendar to sync events and enable meeting mode.
+              Connect Google to sync Calendar events, process Gmail for task extraction, and enable meeting mode.
             </p>
             {syncStatus && (
               <p className={cn(
@@ -376,14 +379,14 @@ export default function SettingsPage() {
                       await initGoogleAuth();
                       await signInWithGoogle();
                       setGoogleConnected(true);
-                      setSyncStatus('Connected! Click "Sync Now" to import events.');
+                      setSyncStatus('Connected! Click "Sync Calendar" to import events.');
                     } catch (error) {
                       setSyncStatus(`Error: ${error instanceof Error ? error.message : 'Failed to connect'}`);
                     }
                   }}
                   className="btn btn-primary"
                 >
-                  Connect Google Calendar
+                  Connect Google
                 </button>
               ) : (
                 <>
@@ -391,7 +394,7 @@ export default function SettingsPage() {
                     onClick={async () => {
                       if (!user) return;
                       setIsSyncing(true);
-                      setSyncStatus('Syncing...');
+                      setSyncStatus('Syncing calendar...');
                       try {
                         const now = new Date();
                         const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
@@ -403,7 +406,7 @@ export default function SettingsPage() {
                           await syncEvent(converted);
                           synced++;
                         }
-                        setSyncStatus(`Successfully synced ${synced} events!`);
+                        setSyncStatus(`Synced ${synced} calendar events`);
                       } catch (error) {
                         setSyncStatus(`Error: ${error instanceof Error ? error.message : 'Sync failed'}`);
                       } finally {
@@ -411,7 +414,7 @@ export default function SettingsPage() {
                       }
                     }}
                     disabled={isSyncing}
-                    className="btn btn-primary"
+                    className="btn btn-secondary"
                   >
                     {isSyncing ? (
                       <>
@@ -421,7 +424,7 @@ export default function SettingsPage() {
                     ) : (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2" />
-                        Sync Now
+                        Sync Calendar
                       </>
                     )}
                   </button>
@@ -431,7 +434,7 @@ export default function SettingsPage() {
                       setGoogleConnected(false);
                       setSyncStatus(null);
                     }}
-                    className="btn btn-secondary"
+                    className="btn btn-secondary text-red-600 hover:text-red-700"
                   >
                     <X className="w-4 h-4 mr-2" />
                     Disconnect
@@ -441,166 +444,144 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Gmail</h2>
-            <p className="text-gray-500 mb-4">
-              Connect Gmail to enable email-based task creation and ghostwriter drafts.
-            </p>
-            <p className="text-sm text-amber-600 mb-4">
-              Gmail integration uses the same Google connection. Connect Google Calendar first.
-            </p>
-            <button className="btn btn-secondary" disabled={!googleConnected}>
-              {googleConnected ? 'Gmail Connected' : 'Connect Gmail'}
-            </button>
-          </div>
-
-          {/* Ralph AI - Email Task Extraction */}
+          {/* Anthropic Integration (Ralph AI) */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className={cn(
                   'p-2 rounded-lg',
-                  isRalphReady().ready ? 'bg-purple-100' : 'bg-gray-100'
+                  isAnthropicConfigured() ? 'bg-purple-100' : 'bg-gray-100'
                 )}>
                   <Bot className={cn(
                     'w-5 h-5',
-                    isRalphReady().ready ? 'text-purple-600' : 'text-gray-400'
+                    isAnthropicConfigured() ? 'text-purple-600' : 'text-gray-400'
                   )} />
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Ralph AI</h2>
-                  <p className="text-sm text-gray-500">Automatic Email Task Extraction</p>
-                </div>
+                <h2 className="text-lg font-semibold text-gray-900">Anthropic Integration</h2>
               </div>
-              {isRalphReady().ready ? (
+              {isAnthropicConfigured() ? (
                 <span className="flex items-center text-sm text-green-600">
                   <Check className="w-4 h-4 mr-1" />
-                  Ready
+                  Connected
                 </span>
               ) : (
-                <span className="text-sm text-amber-600">Setup Required</span>
+                <span className="text-sm text-amber-600">Not Configured</span>
               )}
             </div>
+            <p className="text-gray-500 mb-4">
+              Powers Ralph AI for automatic email task extraction. Requires Google to be connected.
+            </p>
 
-            {/* Setup requirements */}
-            {!isRalphReady().ready && (
-              <div className="mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+            {isRalphReady().ready ? (
+              <>
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-500 mb-1">Last Sync</p>
+                    <p className="font-semibold text-gray-900 text-sm">
+                      {ralphStats.lastSync
+                        ? new Date(ralphStats.lastSync).toLocaleTimeString()
+                        : 'Never'}
+                    </p>
+                  </div>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-500 mb-1">Emails Processed</p>
+                    <p className="font-semibold text-gray-900">{ralphStats.totalEmailsProcessed}</p>
+                  </div>
+                  <div className="text-center p-3 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-500 mb-1">Tasks Created</p>
+                    <p className="font-semibold text-gray-900">{ralphStats.totalTasksCreated}</p>
+                  </div>
+                </div>
+
+                {/* Status message */}
+                {ralphSyncStatus && (
+                  <p className={cn(
+                    'text-sm mb-4',
+                    ralphSyncStatus.includes('Error') ? 'text-red-600' : 'text-green-600'
+                  )}>
+                    {ralphSyncStatus}
+                  </p>
+                )}
+
+                {/* Auto-sync toggle */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-4">
+                  <div>
+                    <p className="font-medium text-gray-900">Auto-Sync Emails</p>
+                    <p className="text-sm text-gray-500">
+                      Automatically process new emails every 15 minutes
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleAutoSync(!autoSyncEnabled)}
+                    className={cn(
+                      'w-12 h-6 rounded-full transition-colors relative',
+                      autoSyncEnabled ? 'bg-purple-500' : 'bg-gray-300'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+                        autoSyncEnabled ? 'translate-x-7' : 'translate-x-1'
+                      )}
+                    />
+                  </button>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleManualRalphSync}
+                    disabled={isRalphSyncing}
+                    className="btn btn-primary flex-1"
+                  >
+                    {isRalphSyncing ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4 mr-2" />
+                        Process Emails Now
+                      </>
+                    )}
+                  </button>
+
+                  {ralphStats.totalEmailsProcessed > 0 && (
+                    <button
+                      onClick={() => {
+                        if (confirm('Clear all Ralph AI sync data? This will reset the processed email history.')) {
+                          clearRalphData();
+                          setRalphStats(getRalphStats());
+                          setRalphSyncStatus('Data cleared');
+                        }
+                      }}
+                      className="btn btn-secondary"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Clear Data
+                    </button>
+                  )}
+                </div>
+
+                {/* Auto-sync status indicator */}
+                {autoSyncEnabled && (
+                  <div className="mt-4 flex items-center gap-2 text-sm text-purple-600">
+                    <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+                    Auto-sync active - checking every 15 minutes
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                 <p className="text-sm text-amber-800 font-medium mb-1">Requirements:</p>
                 <ul className="text-sm text-amber-700 list-disc list-inside space-y-1">
-                  {!googleConnected && <li>Connect Google account (above)</li>}
+                  {!googleConnected && <li>Connect Google (above)</li>}
                   {!isAnthropicConfigured() && (
-                    <li>Add VITE_ANTHROPIC_API_KEY to environment variables</li>
+                    <li>Deploy ai-extract-tasks Edge Function in Supabase</li>
                   )}
                 </ul>
-              </div>
-            )}
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">Last Sync</p>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {ralphStats.lastSync
-                    ? new Date(ralphStats.lastSync).toLocaleTimeString()
-                    : 'Never'}
-                </p>
-              </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">Emails Processed</p>
-                <p className="font-semibold text-gray-900">{ralphStats.totalEmailsProcessed}</p>
-              </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500 mb-1">Tasks Created</p>
-                <p className="font-semibold text-gray-900">{ralphStats.totalTasksCreated}</p>
-              </div>
-            </div>
-
-            {/* Status message */}
-            {ralphSyncStatus && (
-              <p className={cn(
-                'text-sm mb-4',
-                ralphSyncStatus.includes('Error') ? 'text-red-600' : 'text-green-600'
-              )}>
-                {ralphSyncStatus}
-              </p>
-            )}
-
-            {/* Auto-sync toggle */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-4">
-              <div>
-                <p className="font-medium text-gray-900">Auto-Sync Emails</p>
-                <p className="text-sm text-gray-500">
-                  Automatically process new emails every 15 minutes
-                </p>
-              </div>
-              <button
-                onClick={() => handleToggleAutoSync(!autoSyncEnabled)}
-                disabled={!isRalphReady().ready}
-                className={cn(
-                  'w-12 h-6 rounded-full transition-colors relative',
-                  autoSyncEnabled && isRalphReady().ready ? 'bg-purple-500' : 'bg-gray-300',
-                  !isRalphReady().ready && 'opacity-50 cursor-not-allowed'
-                )}
-              >
-                <span
-                  className={cn(
-                    'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
-                    autoSyncEnabled && isRalphReady().ready ? 'translate-x-7' : 'translate-x-1'
-                  )}
-                />
-              </button>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={handleManualRalphSync}
-                disabled={!isRalphReady().ready || isRalphSyncing}
-                className={cn(
-                  'btn flex-1',
-                  isRalphReady().ready ? 'btn-primary' : 'btn-secondary opacity-50'
-                )}
-              >
-                {isRalphSyncing ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : autoSyncEnabled ? (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Sync Now
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Process Emails
-                  </>
-                )}
-              </button>
-
-              {ralphStats.totalEmailsProcessed > 0 && (
-                <button
-                  onClick={() => {
-                    if (confirm('Clear all Ralph AI sync data? This will reset the processed email history.')) {
-                      clearRalphData();
-                      setRalphStats(getRalphStats());
-                      setRalphSyncStatus('Data cleared');
-                    }
-                  }}
-                  className="btn btn-secondary"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Clear Data
-                </button>
-              )}
-            </div>
-
-            {/* Auto-sync status indicator */}
-            {autoSyncEnabled && isRalphReady().ready && (
-              <div className="mt-4 flex items-center gap-2 text-sm text-purple-600">
-                <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
-                Auto-sync active - checking every 15 minutes
               </div>
             )}
           </div>
@@ -608,34 +589,24 @@ export default function SettingsPage() {
           {/* Monday.com Integration */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Monday.com</h2>
-              {integrationStatus.monday.connected && (
+              <h2 className="text-lg font-semibold text-gray-900">Monday Integration</h2>
+              {integrationStatus.monday.connected ? (
                 <span className="flex items-center gap-1 text-sm text-green-600">
                   <Check className="w-4 h-4" />
                   Connected
                 </span>
+              ) : integrationStatus.monday.enabled ? (
+                <span className="text-sm text-amber-600">Configured</span>
+              ) : (
+                <span className="text-sm text-gray-400">Not Configured</span>
               )}
             </div>
             <p className="text-gray-500 mb-4">
-              Sync GEODE Reports with your Monday.com board for bidirectional status updates.
+              Sync GEODE Reports with Monday.com for bidirectional status updates.
             </p>
 
             {integrationStatus.monday.enabled ? (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Reports Progress Board</p>
-                    <p className="text-sm text-gray-500 font-mono">
-                      {integrationStatus.monday.geodeBoardId || 'Not configured'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Payments Board</p>
-                    <p className="text-sm text-gray-500 font-mono">
-                      {integrationStatus.monday.paymentsBoardId || 'Not configured'}
-                    </p>
-                  </div>
-                </div>
                 <div className="flex items-center gap-4">
                   <button
                     onClick={async () => {
@@ -671,15 +642,10 @@ export default function SettingsPage() {
                 )}
               </div>
             ) : (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <p className="text-sm text-amber-800">
-                  Monday.com integration not configured. Add your API token to the environment variables:
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-gray-600">
+                  Monday.com integration requires environment variables. Contact admin to configure.
                 </p>
-                <code className="block mt-2 text-xs bg-amber-100 p-2 rounded font-mono">
-                  VITE_MONDAY_API_TOKEN=your-token
-                  <br />
-                  VITE_MONDAY_GEODE_BOARD_ID=9305961226
-                </code>
               </div>
             )}
           </div>
@@ -687,27 +653,25 @@ export default function SettingsPage() {
           {/* Slack Integration */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Slack</h2>
-              {integrationStatus.slack.connected && (
+              <h2 className="text-lg font-semibold text-gray-900">Slack Integration</h2>
+              {integrationStatus.slack.connected ? (
                 <span className="flex items-center gap-1 text-sm text-green-600">
                   <Check className="w-4 h-4" />
                   Connected
                 </span>
+              ) : integrationStatus.slack.enabled ? (
+                <span className="text-sm text-amber-600">Configured</span>
+              ) : (
+                <span className="text-sm text-gray-400">Not Configured</span>
               )}
             </div>
             <p className="text-gray-500 mb-4">
-              Send GEODE notifications, nudges, and deadline reminders to your Slack workspace.
+              Send GEODE notifications, nudges, and deadline reminders to Slack.
             </p>
 
             {integrationStatus.slack.enabled ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-700">Default Channel</p>
-                    <p className="text-sm text-gray-500 font-mono">
-                      {integrationStatus.slack.channelId || 'Not configured'}
-                    </p>
-                  </div>
                   <button
                     onClick={async () => {
                       setIsSlackTesting(true);
@@ -737,22 +701,15 @@ export default function SettingsPage() {
                 {integrationStatus.slack.connected && (
                   <div className="flex items-center gap-2 text-sm text-green-600">
                     <span className="w-2 h-2 bg-green-500 rounded-full" />
-                    Slack bot active and ready to send notifications
+                    Slack bot active and ready
                   </div>
                 )}
               </div>
             ) : (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <p className="text-sm text-amber-800">
-                  Slack integration not configured. Add your bot token to the environment variables:
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-gray-600">
+                  Slack integration requires environment variables. Contact admin to configure.
                 </p>
-                <code className="block mt-2 text-xs bg-amber-100 p-2 rounded font-mono">
-                  VITE_SLACK_BOT_TOKEN=xoxb-your-token
-                  <br />
-                  VITE_SLACK_SIGNING_SECRET=your-secret
-                  <br />
-                  VITE_SLACK_DEFAULT_CHANNEL_ID=C0123456789
-                </code>
               </div>
             )}
           </div>
