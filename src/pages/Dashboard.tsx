@@ -50,16 +50,14 @@ export default function Dashboard() {
   const overdueGeodeChapters = useOverdueChapters();
 
   // GEODE email store
-  const { initializeMockData: initializeEmailData } = useGeodeEmailStore();
   const highPriorityEmailTasks = useHighPriorityEmailTasks();
 
-  // Initialize GEODE chapters and email data on mount
+  // Initialize GEODE chapters on mount (email mock data removed - use real data only)
   useEffect(() => {
     if (Object.keys(chapters).length === 0) {
       initializeChapters();
     }
-    initializeEmailData();
-  }, [chapters, initializeChapters, initializeEmailData]);
+  }, [chapters, initializeChapters]);
 
   const [kpis, setKpis] = useState<KPIData>({
     open_tasks: 0,
