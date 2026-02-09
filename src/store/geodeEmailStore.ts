@@ -181,32 +181,39 @@ export const useGeodeEmailStore = create<GeodeEmailStoreState>()(
     }),
     {
       name: 'geode-email-store',
-      version: 1, // Increment this when adding new migrations
+      version: 2, // Bumped to re-run migration with correct field names
       migrate: (persistedState: unknown, version: number) => {
         const state = persistedState as {
           emailEvents: GeodeEmailEvent[];
           confirmationTasks: GeodeConfirmationTask[];
         };
 
-        // Migration from version 0 (or undefined) to version 1:
-        // Remove any mock data containing "Jayash" or "Paudel"
-        if (version === 0 || version === undefined) {
-          console.log('[GeodeEmailStore] Running migration v1: Cleaning up Jayash Paudel mock data');
+        // Migration to version 2: Remove Jayash Paudel mock data
+        // Previous v1 migration used wrong field name (authorName vs detectedAuthorName)
+        if (version < 2) {
+          console.log('[GeodeEmailStore] Running migration v2: Cleaning up Jayash Paudel mock data');
 
-          const cleanedEmailEvents = (state.emailEvents || []).filter((event) => {
-            const authorName = event.authorName?.toLowerCase() || '';
-            const shouldRemove = authorName.includes('jayash') || authorName.includes('paudel');
+          const cleanedEmailEvents = (state.emailEvents || []).filter((event: Record<string, unknown>) => {
+            // Check both possible field names and also fromName/subject
+            const detectedAuthor = ((event.detectedAuthorName as string) || '').toLowerCase();
+            const fromName = ((event.fromName as string) || '').toLowerCase();
+            const subject = ((event.subject as string) || '').toLowerCase();
+            const shouldRemove = detectedAuthor.includes('jayash') || detectedAuthor.includes('paudel') ||
+                                 fromName.includes('jayash') || fromName.includes('paudel') ||
+                                 subject.includes('jayash') || subject.includes('paudel');
             if (shouldRemove) {
-              console.log('[GeodeEmailStore] Removing mock email event:', event.id, event.authorName);
+              console.log('[GeodeEmailStore] Removing mock email event:', event.id);
             }
             return !shouldRemove;
           });
 
-          const cleanedTasks = (state.confirmationTasks || []).filter((task) => {
-            const authorName = task.authorName?.toLowerCase() || '';
-            const shouldRemove = authorName.includes('jayash') || authorName.includes('paudel');
+          const cleanedTasks = (state.confirmationTasks || []).filter((task: Record<string, unknown>) => {
+            const authorName = ((task.authorName as string) || '').toLowerCase();
+            const title = ((task.title as string) || '').toLowerCase();
+            const shouldRemove = authorName.includes('jayash') || authorName.includes('paudel') ||
+                                 title.includes('jayash') || title.includes('paudel');
             if (shouldRemove) {
-              console.log('[GeodeEmailStore] Removing mock task:', task.id, task.authorName);
+              console.log('[GeodeEmailStore] Removing mock task:', task.id);
             }
             return !shouldRemove;
           });
