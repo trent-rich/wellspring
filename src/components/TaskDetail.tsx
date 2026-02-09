@@ -127,12 +127,12 @@ export default function TaskDetail({ task, onClose }: TaskDetailProps) {
       {/* Drawer panel */}
       <div className="drawer-panel">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-3 sm:p-4 z-10">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-mono text-gray-400">{task.short_id}</span>
-              <span className={cn('badge', getStatusColor(task.status))}>{task.status}</span>
-              <span className={cn('text-sm', getStageColor(task.stage))}>{task.stage}</span>
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+              <span className="text-xs sm:text-sm font-mono text-gray-400">{task.short_id}</span>
+              <span className={cn('badge text-xs', getStatusColor(task.status))}>{task.status}</span>
+              <span className={cn('text-xs sm:text-sm', getStageColor(task.stage))}>{task.stage}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -188,7 +188,7 @@ export default function TaskDetail({ task, onClose }: TaskDetailProps) {
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-6">
+        <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
           {/* Title & Description */}
           <div>
             {isEditing ? (
@@ -227,7 +227,7 @@ export default function TaskDetail({ task, onClose }: TaskDetailProps) {
           </div>
 
           {/* Metadata */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium text-gray-500">Priority</label>
               <div className={cn('px-3 py-2 rounded-lg', getPriorityColor(task.priority))}>
@@ -377,8 +377,8 @@ export default function TaskDetail({ task, onClose }: TaskDetailProps) {
         </div>
 
         {/* Footer actions */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4">
-          <div className="flex gap-3">
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-3 sm:p-4 safe-area-inset-bottom">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             {task.status !== 'completed' && (
               <button onClick={handleComplete} className="btn btn-primary flex-1">
                 <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -394,8 +394,8 @@ export default function TaskDetail({ task, onClose }: TaskDetailProps) {
 
       {/* Delegate modal */}
       {showDelegateModal && (
-        <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-xl sm:rounded-xl shadow-2xl w-full sm:max-w-md p-4 sm:p-6 max-h-[80vh] overflow-y-auto safe-area-inset-bottom">
             <h3 className="text-lg font-semibold mb-4">Delegate Task</h3>
             <div className="space-y-2">
               {['cell_1', 'cell_2', 'cell_3', 'cell_4', 'cell_5', 'cos', 'reality_check'].map(
@@ -403,7 +403,7 @@ export default function TaskDetail({ task, onClose }: TaskDetailProps) {
                   <button
                     key={actorId}
                     onClick={() => handleDelegate(actorId)}
-                    className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 border border-gray-200"
+                    className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 border border-gray-200 touch-target"
                   >
                     <span className={cn('badge mr-2', getCellColor(actorId))}>
                       {getCellName(actorId)}

@@ -158,12 +158,12 @@ export default function TaskStream({ onSelectTask, selectedTaskId }: TaskStreamP
   return (
     <div className="space-y-4">
       {/* Filter bar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto mobile-scroll-x pb-1 sm:pb-0">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              'btn btn-ghost text-sm',
+              'btn btn-ghost text-sm flex-shrink-0',
               showFilters && 'bg-gray-100'
             )}
           >
@@ -175,7 +175,7 @@ export default function TaskStream({ onSelectTask, selectedTaskId }: TaskStreamP
           <button
             onClick={() => setFilter({ judgmentRequired: !filter.judgmentRequired })}
             className={cn(
-              'btn btn-ghost text-sm',
+              'btn btn-ghost text-sm flex-shrink-0 whitespace-nowrap',
               filter.judgmentRequired && 'bg-amber-50 text-amber-700'
             )}
           >
@@ -184,17 +184,17 @@ export default function TaskStream({ onSelectTask, selectedTaskId }: TaskStreamP
           </button>
         </div>
 
-        <span className="text-sm text-gray-500">{tasks.length} tasks</span>
+        <span className="text-sm text-gray-500 flex-shrink-0">{tasks.length} tasks</span>
       </div>
 
       {/* Expanded filters */}
       {showFilters && (
-        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className="text-xs font-medium text-gray-500 mb-1 block">Work Mode</label>
               <select
-                className="select text-sm"
+                className="select text-sm w-full"
                 value={filter.workMode || ''}
                 onChange={(e) => setFilter({ workMode: e.target.value as 'ralph' | 'gastown' | undefined })}
               >
@@ -207,7 +207,7 @@ export default function TaskStream({ onSelectTask, selectedTaskId }: TaskStreamP
             <div>
               <label className="text-xs font-medium text-gray-500 mb-1 block">Cell</label>
               <select
-                className="select text-sm"
+                className="select text-sm w-full"
                 value={filter.cellAffiliation || ''}
                 onChange={(e) => setFilter({ cellAffiliation: e.target.value || undefined })}
               >
@@ -221,7 +221,7 @@ export default function TaskStream({ onSelectTask, selectedTaskId }: TaskStreamP
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 text-sm">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"

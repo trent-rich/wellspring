@@ -58,14 +58,14 @@ export default function TasksPage() {
   return (
     <div className="h-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
-          <p className="text-gray-500 mt-1">{tasks.length} tasks in view</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Tasks</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">{tasks.length} tasks in view</p>
         </div>
         <button
           onClick={() => setShowCreateForm(true)}
-          className="btn btn-primary"
+          className="btn btn-primary w-full sm:w-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
           New Task
@@ -140,13 +140,13 @@ function CreateTaskModal({ onClose, onCreate }: CreateTaskModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
-        <div className="p-6 border-b border-gray-200">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white rounded-t-xl sm:rounded-xl shadow-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto safe-area-inset-bottom">
+        <div className="p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
           <h2 className="text-lg font-semibold text-gray-900">Create New Task</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Title <span className="text-red-500">*</span>
@@ -175,7 +175,7 @@ function CreateTaskModal({ onClose, onCreate }: CreateTaskModalProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Priority
@@ -183,7 +183,7 @@ function CreateTaskModal({ onClose, onCreate }: CreateTaskModalProps) {
               <select
                 value={priority}
                 onChange={(e) => setPriority(Number(e.target.value))}
-                className="select"
+                className="select w-full"
               >
                 <option value={20}>Low</option>
                 <option value={50}>Medium</option>
@@ -199,7 +199,7 @@ function CreateTaskModal({ onClose, onCreate }: CreateTaskModalProps) {
               <select
                 value={cellAffiliation}
                 onChange={(e) => setCellAffiliation(e.target.value)}
-                className="select"
+                className="select w-full"
               >
                 <option value="">None</option>
                 <option value="cell_1">Cell 1 - Thermal Commons</option>
@@ -211,20 +211,20 @@ function CreateTaskModal({ onClose, onCreate }: CreateTaskModalProps) {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <button
-              type="submit"
-              disabled={isSubmitting || !title.trim()}
-              className="btn btn-primary flex-1"
-            >
-              {isSubmitting ? 'Creating...' : 'Create Task'}
-            </button>
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
               className="btn btn-secondary flex-1"
             >
               Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || !title.trim()}
+              className="btn btn-primary flex-1"
+            >
+              {isSubmitting ? 'Creating...' : 'Create Task'}
             </button>
           </div>
         </form>

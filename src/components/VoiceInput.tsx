@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Mic, Loader2, X, Volume2 } from 'lucide-react';
+import { Mic, Loader2, X, Volume2, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTaskStore } from '../store/taskStore';
 import { useUserStateStore } from '../store/userStateStore';
@@ -65,8 +65,9 @@ export default function VoiceInput({ onClose }: VoiceInputProps) {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const navigate = useNavigate();
 
-  const { fetchTaskByShortId, completeTask, snoozeTask } = useTaskStore();
+  const { fetchTaskByShortId, completeTask, snoozeTask, createTask } = useTaskStore();
   const { enterFocusMode, exitProtectedState } = useUserStateStore();
+  const [pendingAction, setPendingAction] = useState<VoiceCommand | null>(null);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -144,8 +145,15 @@ export default function VoiceInput({ onClose }: VoiceInputProps) {
         const fullTranscript = transcript + interimTranscript;
         const parsedCommand = parseVoiceCommand(fullTranscript);
         setCommand(parsedCommand);
-        await executeCommand(parsedCommand);
-        setIsProcessing(false);
+
+        // For create_task, require user confirmation before executing
+        if (parsedCommand.intent === 'create_task' && parsedCommand.parameters.title) {
+          setPendingAction(parsedCommand);
+          setIsProcessing(false);
+        } else {
+          await executeCommand(parsedCommand);
+          setIsProcessing(false);
+        }
       }
     }
   }, [isListening, transcript, interimTranscript]);
@@ -333,6 +341,14 @@ export default function VoiceInput({ onClose }: VoiceInputProps) {
           navigate(`/tasks?search=${encodeURIComponent(cmd.parameters.query as string)}`);
           onClose();
           break;
+        case 'create_task': {
+          const title = cmd.parameters.title as string;
+          if (title) {
+            await createTask({ title, priority: 50 });
+            onClose();
+          }
+          break;
+        }
         default:
           // Unknown command - keep modal open for user to see
           break;
@@ -341,6 +357,22 @@ export default function VoiceInput({ onClose }: VoiceInputProps) {
       console.error('Command execution error:', err);
       setError('Failed to execute command.');
     }
+  };
+
+  // Handle confirming a pending action
+  const handleConfirmAction = async () => {
+    if (!pendingAction) return;
+    setIsProcessing(true);
+    await executeCommand(pendingAction);
+    setPendingAction(null);
+    setIsProcessing(false);
+  };
+
+  // Handle canceling a pending action
+  const handleCancelAction = () => {
+    setPendingAction(null);
+    setCommand(null);
+    setTranscript('');
   };
 
   // Handle keyboard shortcuts
@@ -370,17 +402,17 @@ export default function VoiceInput({ onClose }: VoiceInputProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-lg font-semibold text-gray-900">Voice Command</h2>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
-        {/* Main content */}
-        <div className="p-6">
+        {/* Main content - scrollable */}
+        <div className="p-6 overflow-y-auto flex-1">
           {/* Microphone button */}
           <div className="flex justify-center mb-6">
             <button
@@ -429,29 +461,64 @@ export default function VoiceInput({ onClose }: VoiceInputProps) {
           {command && (
             <div
               className={cn(
-                'rounded-lg p-4',
+                'rounded-lg p-4 mb-4',
                 command.intent === 'unknown'
                   ? 'bg-amber-50 border border-amber-200'
+                  : pendingAction
+                  ? 'bg-blue-50 border border-blue-200'
                   : 'bg-green-50 border border-green-200'
               )}
             >
               <div className="flex items-center gap-2 mb-2">
                 <Volume2 className={cn(
                   'w-4 h-4',
-                  command.intent === 'unknown' ? 'text-amber-600' : 'text-green-600'
+                  command.intent === 'unknown' ? 'text-amber-600' : pendingAction ? 'text-blue-600' : 'text-green-600'
                 )} />
                 <span className={cn(
                   'text-sm font-medium',
-                  command.intent === 'unknown' ? 'text-amber-700' : 'text-green-700'
+                  command.intent === 'unknown' ? 'text-amber-700' : pendingAction ? 'text-blue-700' : 'text-green-700'
                 )}>
                   {command.intent === 'unknown'
                     ? "Didn't understand"
+                    : pendingAction
+                    ? `Confirm: ${command.intent.replace('_', ' ')}`
                     : `Executing: ${command.intent.replace('_', ' ')}`}
                 </span>
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 mb-1">
                 Confidence: {Math.round(command.confidence * 100)}%
               </p>
+              {pendingAction && pendingAction.intent === 'create_task' && (
+                <p className="text-sm text-gray-700 font-medium mt-2">
+                  Task: "{pendingAction.parameters.title}"
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Confirmation buttons for pending actions */}
+          {pendingAction && (
+            <div className="flex gap-3 mb-4">
+              <button
+                onClick={handleConfirmAction}
+                disabled={isProcessing}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-watershed-600 text-white rounded-lg hover:bg-watershed-700 disabled:opacity-50 font-medium"
+              >
+                {isProcessing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4" />
+                )}
+                {isProcessing ? 'Creating...' : 'Create Task'}
+              </button>
+              <button
+                onClick={handleCancelAction}
+                disabled={isProcessing}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 font-medium"
+              >
+                <X className="w-4 h-4" />
+                Cancel
+              </button>
             </div>
           )}
 
@@ -464,7 +531,7 @@ export default function VoiceInput({ onClose }: VoiceInputProps) {
         </div>
 
         {/* Example commands */}
-        <div className="bg-gray-50 p-4 border-t border-gray-200">
+        <div className="bg-gray-50 p-4 border-t border-gray-200 flex-shrink-0">
           <p className="text-xs font-medium text-gray-500 mb-2">Example commands:</p>
           <div className="flex flex-wrap gap-2">
             {[

@@ -181,6 +181,45 @@ export const useGeodeEmailStore = create<GeodeEmailStoreState>()(
     }),
     {
       name: 'geode-email-store',
+      version: 1, // Increment this when adding new migrations
+      migrate: (persistedState: unknown, version: number) => {
+        const state = persistedState as {
+          emailEvents: GeodeEmailEvent[];
+          confirmationTasks: GeodeConfirmationTask[];
+        };
+
+        // Migration from version 0 (or undefined) to version 1:
+        // Remove any mock data containing "Jayash" or "Paudel"
+        if (version === 0 || version === undefined) {
+          console.log('[GeodeEmailStore] Running migration v1: Cleaning up Jayash Paudel mock data');
+
+          const cleanedEmailEvents = (state.emailEvents || []).filter((event) => {
+            const authorName = event.authorName?.toLowerCase() || '';
+            const shouldRemove = authorName.includes('jayash') || authorName.includes('paudel');
+            if (shouldRemove) {
+              console.log('[GeodeEmailStore] Removing mock email event:', event.id, event.authorName);
+            }
+            return !shouldRemove;
+          });
+
+          const cleanedTasks = (state.confirmationTasks || []).filter((task) => {
+            const authorName = task.authorName?.toLowerCase() || '';
+            const shouldRemove = authorName.includes('jayash') || authorName.includes('paudel');
+            if (shouldRemove) {
+              console.log('[GeodeEmailStore] Removing mock task:', task.id, task.authorName);
+            }
+            return !shouldRemove;
+          });
+
+          return {
+            ...state,
+            emailEvents: cleanedEmailEvents,
+            confirmationTasks: cleanedTasks,
+          };
+        }
+
+        return state;
+      },
     }
   )
 );

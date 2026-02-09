@@ -85,7 +85,7 @@ export default function CommandPalette() {
           </kbd>
         </div>
 
-        <Command.List className="max-h-[400px] overflow-y-auto p-2">
+        <Command.List className="max-h-[60vh] sm:max-h-[400px] overflow-y-auto p-2">
           <Command.Empty className="py-6 text-center text-sm text-gray-500">
             No results found.
           </Command.Empty>
@@ -223,8 +223,8 @@ export default function CommandPalette() {
           </Command.Group>
         </Command.List>
 
-        {/* Footer with keyboard hints */}
-        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-2 text-xs text-gray-500">
+        {/* Footer with keyboard hints - hidden on mobile */}
+        <div className="hidden sm:flex items-center justify-between border-t border-gray-200 px-4 py-2 text-xs text-gray-500">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 bg-gray-100 rounded">↑↓</kbd>
@@ -239,6 +239,15 @@ export default function CommandPalette() {
               Close
             </span>
           </div>
+        </div>
+        {/* Mobile close button */}
+        <div className="sm:hidden border-t border-gray-200 p-3">
+          <button
+            onClick={() => setOpen(false)}
+            className="w-full py-3 text-center text-sm font-medium text-gray-500 hover:text-gray-700 active:bg-gray-50 rounded-lg"
+          >
+            Cancel
+          </button>
         </div>
       </Command>
     </div>

@@ -65,16 +65,16 @@ export default function IdeasPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Ideas</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Ideas</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">
             {ideas.length} ideas • {ripeningIdeas.length} ripening • {readyIdeas.length} ready
           </p>
         </div>
         <button
           onClick={() => setShowCreateForm(true)}
-          className="btn btn-primary"
+          className="btn btn-primary w-full sm:w-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
           Capture Idea
@@ -96,7 +96,7 @@ export default function IdeasPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-2 border-b border-gray-200 overflow-x-auto mobile-scroll-x pb-px">
         {[
           { key: 'all', label: 'All Ideas', count: ideas.filter((i) => !i.archived).length },
           { key: 'ripening', label: 'Ripening', count: ripeningIdeas.length },
@@ -107,7 +107,7 @@ export default function IdeasPage() {
             key={tab.key}
             onClick={() => setFilter(tab.key as typeof filter)}
             className={cn(
-              'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+              'px-3 sm:px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap flex-shrink-0',
               filter === tab.key
                 ? 'border-watershed-500 text-watershed-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -119,7 +119,7 @@ export default function IdeasPage() {
       </div>
 
       {/* Ideas grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {filteredIdeas.map((idea) => {
           const { canExecute, hoursRemaining, percentComplete } = getContainmentRemaining(
             idea.execution_blocked_until
@@ -292,16 +292,16 @@ function CreateIdeaModal({ onClose, onCreate }: CreateIdeaModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
-        <div className="p-6 border-b border-gray-200">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white rounded-t-xl sm:rounded-xl shadow-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto safe-area-inset-bottom">
+        <div className="p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
           <h2 className="text-lg font-semibold text-gray-900">Capture New Idea</h2>
           <p className="text-sm text-gray-500 mt-1">
             This idea will ripen for 72 hours before execution
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Idea Title <span className="text-red-500">*</span>
@@ -350,20 +350,20 @@ function CreateIdeaModal({ onClose, onCreate }: CreateIdeaModalProps) {
             </p>
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <button
-              type="submit"
-              disabled={isSubmitting || !title.trim()}
-              className="btn btn-primary flex-1"
-            >
-              {isSubmitting ? 'Creating...' : 'Capture Idea'}
-            </button>
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
               className="btn btn-secondary flex-1"
             >
               Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || !title.trim()}
+              className="btn btn-primary flex-1"
+            >
+              {isSubmitting ? 'Creating...' : 'Capture Idea'}
             </button>
           </div>
         </form>

@@ -114,11 +114,11 @@ export default function Dashboard() {
   }, [tasks, judgmentQueue, hardGateTasks]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Welcome header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Command Center</h1>
-        <p className="text-gray-500 mt-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Command Center</h1>
+        <p className="text-gray-500 mt-1 text-sm sm:text-base">
           {currentState === 'normal'
             ? "Here's what needs your attention"
             : `You're in ${currentState.replace('_', ' ')} mode`}
@@ -126,7 +126,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Tiles */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <button
           onClick={() => navigate('/tasks')}
           className="kpi-tile text-left"
@@ -173,7 +173,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main content grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Priority tasks */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
@@ -262,16 +262,16 @@ export default function Dashboard() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                         <span className={cn(
-                          'text-xs font-medium',
+                          'text-xs font-medium hidden sm:inline',
                           isUrgent ? 'text-amber-600' : 'text-gray-500'
                         )}>
                           {daysUntil}d to DOE
                         </span>
-                        <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full flex items-center gap-1">
+                        <span className="text-xs px-1.5 sm:px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full flex items-center gap-1">
                           <User className="w-3 h-3" />
-                          GEODE
+                          <span className="hidden sm:inline">GEODE</span>
                         </span>
                       </div>
                     </div>
@@ -335,7 +335,7 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
               {GEODE_STATES.map((state) => {
                 const deadline = doeDeadlines[state.value];
                 const daysUntil = Math.ceil(

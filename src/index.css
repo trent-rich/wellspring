@@ -106,11 +106,23 @@
 
   /* Command palette */
   .command-palette {
-    @apply fixed inset-0 z-50 bg-black/50 flex items-start justify-center pt-[20vh];
+    @apply fixed inset-0 z-50 bg-black/50 flex items-start justify-center pt-4 px-4;
+  }
+
+  @media (min-width: 640px) {
+    .command-palette {
+      @apply pt-[20vh] px-4;
+    }
   }
 
   .command-palette-content {
     @apply bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden;
+  }
+
+  @media (max-width: 639px) {
+    .command-palette-content {
+      @apply max-h-[80vh];
+    }
   }
 
   /* Voice input indicator */
@@ -156,7 +168,19 @@
   }
 
   .drawer-panel {
-    @apply fixed right-0 top-0 h-full w-full max-w-xl bg-white shadow-xl z-50 overflow-y-auto;
+    @apply fixed right-0 top-0 h-full w-full bg-white shadow-xl z-50 overflow-y-auto;
+  }
+
+  @media (min-width: 640px) {
+    .drawer-panel {
+      max-width: 28rem; /* sm:max-w-md */
+    }
+  }
+
+  @media (min-width: 768px) {
+    .drawer-panel {
+      max-width: 36rem; /* md:max-w-xl */
+    }
   }
 
   /* Badges */
@@ -264,5 +288,32 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
+  }
+
+  /* Mobile-friendly horizontal scroll for tabs/filters */
+  .mobile-scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .mobile-scroll-x::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Safe area padding for notched devices */
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Touch-friendly tap targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
