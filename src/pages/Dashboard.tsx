@@ -20,7 +20,7 @@ import { useRipeningIdeas, useReadyToExecuteIdeas } from '../store/ideaStore';
 import { useTodayEvents } from '../store/calendarStore';
 import { useUserStateStore } from '../store/userStateStore';
 import { useGeodeChapterStore, useTrentChapters, useOverdueChapters } from '../store/geodeChapterStore';
-import { useGeodeEmailStore, useHighPriorityEmailTasks } from '../store/geodeEmailStore';
+import { useHighPriorityEmailTasks } from '../store/geodeEmailStore';
 import { GEODE_STATES, GEODE_CHAPTER_TYPES } from '../types/geode';
 import type { GeodeState } from '../types/geode';
 import { getStepMeta, calculateDaysOnStep, isStepOverdue } from '../types/geodeWorkflow';

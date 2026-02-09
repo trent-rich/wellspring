@@ -193,11 +193,11 @@ export const useGeodeEmailStore = create<GeodeEmailStoreState>()(
         if (version < 2) {
           console.log('[GeodeEmailStore] Running migration v2: Cleaning up Jayash Paudel mock data');
 
-          const cleanedEmailEvents = (state.emailEvents || []).filter((event: Record<string, unknown>) => {
+          const cleanedEmailEvents = (state.emailEvents || []).filter((event) => {
             // Check both possible field names and also fromName/subject
-            const detectedAuthor = ((event.detectedAuthorName as string) || '').toLowerCase();
-            const fromName = ((event.fromName as string) || '').toLowerCase();
-            const subject = ((event.subject as string) || '').toLowerCase();
+            const detectedAuthor = (event.detectedAuthorName || '').toLowerCase();
+            const fromName = (event.fromName || '').toLowerCase();
+            const subject = (event.subject || '').toLowerCase();
             const shouldRemove = detectedAuthor.includes('jayash') || detectedAuthor.includes('paudel') ||
                                  fromName.includes('jayash') || fromName.includes('paudel') ||
                                  subject.includes('jayash') || subject.includes('paudel');
@@ -207,9 +207,9 @@ export const useGeodeEmailStore = create<GeodeEmailStoreState>()(
             return !shouldRemove;
           });
 
-          const cleanedTasks = (state.confirmationTasks || []).filter((task: Record<string, unknown>) => {
-            const authorName = ((task.authorName as string) || '').toLowerCase();
-            const title = ((task.title as string) || '').toLowerCase();
+          const cleanedTasks = (state.confirmationTasks || []).filter((task) => {
+            const authorName = (task.authorName || '').toLowerCase();
+            const title = (task.title || '').toLowerCase();
             const shouldRemove = authorName.includes('jayash') || authorName.includes('paudel') ||
                                  title.includes('jayash') || title.includes('paudel');
             if (shouldRemove) {
