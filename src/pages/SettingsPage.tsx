@@ -10,6 +10,7 @@ import {
   X,
   Bot,
   Play,
+  Trash2,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useUserStateStore } from '../store/userStateStore';
@@ -782,6 +783,28 @@ export default function SettingsPage() {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Clear Stale Data */}
+          <div className="bg-white rounded-lg border border-red-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Clear Stale Data</h2>
+            </div>
+            <p className="text-gray-500 mb-4">
+              Clear cached task data from this device. Use this if you see old/stale priority tasks that should have been cleared.
+            </p>
+            <button
+              onClick={() => {
+                // Clear the geode email store completely
+                localStorage.removeItem('geode-email-store');
+                // Force page reload to reinitialize
+                window.location.reload();
+              }}
+              className="btn btn-secondary text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Clear Stale Task Data
+            </button>
           </div>
         </div>
       )}
