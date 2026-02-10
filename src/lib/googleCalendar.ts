@@ -1,5 +1,6 @@
 // Google Calendar Integration
-// This module handles OAuth and calendar sync
+// This module handles OAuth and calendar sync using direct OAuth 2.0 implicit flow
+// (bypasses Google Identity Services popup which is broken by COOP in modern Chrome)
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -21,219 +22,140 @@ const SCOPES = [
 // Store the access token
 let accessToken: string | null = null;
 
-// Initialize Google Identity Services
+// Initialize Google Auth - now a no-op since we use direct OAuth redirect
 export const initGoogleAuth = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    console.log('[Google OAuth] Initializing Google Auth...');
-
-    if (!GOOGLE_CLIENT_ID) {
-      console.error('[Google OAuth] VITE_GOOGLE_CLIENT_ID is not set');
-      reject(new Error('Google Client ID not configured. Please check your environment variables.'));
-      return;
-    }
-
-    // Check if already loaded
-    if (window.google?.accounts?.oauth2) {
-      console.log('[Google OAuth] Google Identity Services already loaded');
-      resolve();
-      return;
-    }
-
-    // Check if script is already being loaded
-    const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-    if (existingScript) {
-      console.log('[Google OAuth] Script already exists, waiting for load...');
-      // Wait for it to load
-      const checkLoaded = setInterval(() => {
-        if (window.google?.accounts?.oauth2) {
-          clearInterval(checkLoaded);
-          console.log('[Google OAuth] Google Identity Services loaded');
-          resolve();
-        }
-      }, 100);
-      // Timeout after 10 seconds
-      setTimeout(() => {
-        clearInterval(checkLoaded);
-        if (!window.google?.accounts?.oauth2) {
-          reject(new Error('Timeout waiting for Google Identity Services to load'));
-        }
-      }, 10000);
-      return;
-    }
-
-    // Load the Google Identity Services library
-    console.log('[Google OAuth] Loading Google Identity Services script...');
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      console.log('[Google OAuth] Script loaded, waiting for window.google to be ready...');
-      // Wait for window.google to be fully initialized (can take a moment after script loads)
-      const waitForGoogle = setInterval(() => {
-        if (window.google?.accounts?.oauth2) {
-          clearInterval(waitForGoogle);
-          console.log('[Google OAuth] Google Identity Services fully ready');
-          resolve();
-        }
-      }, 50);
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        clearInterval(waitForGoogle);
-        if (!window.google?.accounts?.oauth2) {
-          console.error('[Google OAuth] window.google not available after script load');
-          reject(new Error('Google Identity Services failed to initialize'));
-        }
-      }, 5000);
-    };
-    script.onerror = (error) => {
-      console.error('[Google OAuth] Failed to load Google Identity Services:', error);
-      reject(new Error('Failed to load Google Identity Services. Please check your network connection.'));
-    };
-    document.head.appendChild(script);
-  });
+  console.log('[Google OAuth] initGoogleAuth called (no-op for redirect flow)');
+  if (!GOOGLE_CLIENT_ID) {
+    return Promise.reject(new Error('Google Client ID not configured. Please check your environment variables.'));
+  }
+  return Promise.resolve();
 };
 
-// OAuth state management - DO NOT cache tokenClient (causes callback issues in React)
-let pendingResolve: ((token: string) => void) | null = null;
-let pendingReject: ((error: Error) => void) | null = null;
-let isOAuthInProgress = false;
-
-// Module-level callback handler - ensures callback fires correctly even in bundled code
-const handleOAuthResponse = (response: { access_token?: string; error?: string; error_description?: string; expires_in?: number }) => {
-  console.log('[Google OAuth] Callback received:', {
-    hasAccessToken: !!response.access_token,
-    error: response.error,
-    errorDescription: response.error_description,
-  });
-
-  isOAuthInProgress = false;
-
-  if (response.error) {
-    console.error('[Google OAuth] Error from Google:', response.error, response.error_description);
-    if (pendingReject) {
-      pendingReject(new Error(`${response.error}: ${response.error_description || 'Unknown error'}`));
-      pendingReject = null;
-      pendingResolve = null;
-    }
-    return;
-  }
-
-  if (response.access_token) {
-    console.log('[Google OAuth] Access token received successfully');
-    accessToken = response.access_token;
-    // Store in localStorage for persistence
-    localStorage.setItem('google_access_token', response.access_token);
-
-    // Also store in gmail_tokens format for Ralph AI / email processor
-    const expiresIn = response.expires_in || 3600; // Default 1 hour
-    const gmailTokens = {
-      accessToken: response.access_token,
-      expiresAt: Date.now() + (expiresIn * 1000),
-    };
-    localStorage.setItem('gmail_tokens', JSON.stringify(gmailTokens));
-    console.log('[Google OAuth] Tokens stored in localStorage');
-
-    if (pendingResolve) {
-      pendingResolve(response.access_token);
-      pendingResolve = null;
-      pendingReject = null;
-    }
-  } else {
-    // No token and no error - shouldn't happen but handle it
-    console.warn('[Google OAuth] No access token and no error');
-    if (pendingReject) {
-      pendingReject(new Error('Authentication failed - no token received'));
-      pendingReject = null;
-      pendingResolve = null;
-    }
-  }
-};
-
-// Module-level error callback - reject promise if success callback hasn't fired
-const handleOAuthError = (error: { type: string; message?: string }) => {
-  console.error('[Google OAuth] error_callback fired:', JSON.stringify(error), error);
-  isOAuthInProgress = false;
-
-  // If the success callback already resolved, pendingReject will be null — safe to ignore
-  if (pendingReject) {
-    const errorType = error?.type || 'unknown';
-    const errorMsg = error?.message || '';
-    if (errorType === 'popup_closed') {
-      pendingReject(new Error('Google sign-in popup was closed before completing.'));
-    } else {
-      pendingReject(new Error(`Google OAuth error: ${errorType}${errorMsg ? ' — ' + errorMsg : ''}. Check that your Vercel URL is in Google Cloud Console authorized origins.`));
-    }
-    pendingReject = null;
-    pendingResolve = null;
-  }
-};
-
-// Start OAuth flow
-// IMPORTANT: Create a FRESH token client each time (like the working test page does)
-// Caching the token client breaks the callback in React's bundled environment
+// Start OAuth flow using direct redirect-based implicit grant
+// This avoids the Google Identity Services popup COOP issues entirely
 export const signInWithGoogle = (loginHint?: string): Promise<string> => {
   return new Promise((resolve, reject) => {
-    console.log('[Google OAuth] Starting sign-in flow...');
-
-    // Prevent multiple simultaneous OAuth flows
-    if (isOAuthInProgress) {
-      console.log('[Google OAuth] OAuth already in progress, ignoring duplicate call');
-      // Store this as the pending resolver (latest caller wins)
-      pendingResolve = resolve;
-      pendingReject = reject;
-      return;
-    }
-
-    if (!window.google) {
-      console.error('[Google OAuth] Google Identity Services not loaded');
-      reject(new Error('Google Identity Services not loaded'));
-      return;
-    }
+    console.log('[Google OAuth] Starting redirect-based OAuth flow...');
 
     if (!GOOGLE_CLIENT_ID) {
-      console.error('[Google OAuth] Google Client ID not configured');
       reject(new Error('Google Client ID not configured'));
       return;
     }
 
-    console.log('[Google OAuth] Client ID:', GOOGLE_CLIENT_ID.substring(0, 20) + '...');
-    console.log('[Google OAuth] Scopes:', SCOPES);
-    console.log('[Google OAuth] Login hint:', loginHint || '(none)');
+    // Generate a random state parameter for CSRF protection
+    const state = Math.random().toString(36).substring(2, 15);
+    sessionStorage.setItem('google_oauth_state', state);
 
-    // Store the resolve/reject for the callback to use
-    pendingResolve = resolve;
-    pendingReject = reject;
-    isOAuthInProgress = true;
-
-    try {
-      // Create FRESH token client each time - this is crucial!
-      // The test page works because it creates a new client each time.
-      // Caching breaks the callback reference in bundled code.
-      console.log('[Google OAuth] Creating fresh token client...');
-      const clientConfig: Record<string, unknown> = {
-        client_id: GOOGLE_CLIENT_ID,
-        scope: SCOPES,
-        callback: handleOAuthResponse,
-        error_callback: handleOAuthError,
-      };
-
-      // Add login_hint if available (helps skip account chooser)
-      if (loginHint) {
-        clientConfig.login_hint = loginHint;
-      }
-
-      const tokenClient = window.google.accounts.oauth2.initTokenClient(clientConfig as any);
-
-      console.log('[Google OAuth] Requesting access token...');
-      // Use empty string prompt — lets Google decide whether to show consent
-      // 'consent' forces re-consent which can fail in Testing mode
-      tokenClient.requestAccessToken({ prompt: '' });
-    } catch (error) {
-      console.error('[Google OAuth] Exception during OAuth flow:', error);
-      isOAuthInProgress = false;
-      reject(error instanceof Error ? error : new Error('Failed to initialize Google OAuth'));
+    // Build the Google OAuth 2.0 authorization URL (implicit grant)
+    const redirectUri = window.location.origin + '/settings';
+    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    authUrl.searchParams.set('client_id', GOOGLE_CLIENT_ID);
+    authUrl.searchParams.set('redirect_uri', redirectUri);
+    authUrl.searchParams.set('response_type', 'token');
+    authUrl.searchParams.set('scope', SCOPES);
+    authUrl.searchParams.set('state', state);
+    authUrl.searchParams.set('include_granted_scopes', 'true');
+    if (loginHint) {
+      authUrl.searchParams.set('login_hint', loginHint);
     }
+
+    console.log('[Google OAuth] Redirect URI:', redirectUri);
+    console.log('[Google OAuth] Opening OAuth window...');
+
+    // Open in a popup window
+    const width = 500;
+    const height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    const popup = window.open(
+      authUrl.toString(),
+      'google-oauth',
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
+    );
+
+    if (!popup) {
+      reject(new Error('Popup was blocked. Please allow popups for this site.'));
+      return;
+    }
+
+    // Poll the popup for the redirect with the token in the hash
+    const pollInterval = setInterval(() => {
+      try {
+        // Check if popup was closed by user
+        if (popup.closed) {
+          clearInterval(pollInterval);
+          reject(new Error('Google sign-in popup was closed.'));
+          return;
+        }
+
+        // Try to read the popup's URL — this will throw cross-origin errors
+        // until Google redirects back to our origin
+        const popupUrl = popup.location.href;
+
+        // Check if we've been redirected back to our site
+        if (popupUrl.startsWith(window.location.origin)) {
+          clearInterval(pollInterval);
+
+          // Parse the hash fragment for the access token
+          const hash = popup.location.hash.substring(1); // Remove the #
+          popup.close();
+
+          const params = new URLSearchParams(hash);
+          const token = params.get('access_token');
+          const expiresIn = parseInt(params.get('expires_in') || '3600', 10);
+          const returnedState = params.get('state');
+          const error = params.get('error');
+
+          // Check for errors
+          if (error) {
+            const errorDesc = params.get('error_description') || 'Unknown error';
+            console.error('[Google OAuth] Error from Google:', error, errorDesc);
+            reject(new Error(`Google OAuth error: ${error} — ${errorDesc}`));
+            return;
+          }
+
+          // Verify state parameter
+          const savedState = sessionStorage.getItem('google_oauth_state');
+          if (returnedState !== savedState) {
+            console.error('[Google OAuth] State mismatch — possible CSRF');
+            reject(new Error('OAuth state mismatch. Please try again.'));
+            return;
+          }
+          sessionStorage.removeItem('google_oauth_state');
+
+          if (token) {
+            console.log('[Google OAuth] Access token received successfully!');
+            accessToken = token;
+            localStorage.setItem('google_access_token', token);
+
+            // Store in gmail_tokens format for GEODE email executor
+            const gmailTokens = {
+              accessToken: token,
+              expiresAt: Date.now() + (expiresIn * 1000),
+            };
+            localStorage.setItem('gmail_tokens', JSON.stringify(gmailTokens));
+            console.log('[Google OAuth] Tokens stored in localStorage, expires in', expiresIn, 'seconds');
+
+            resolve(token);
+          } else {
+            console.error('[Google OAuth] No access token in redirect');
+            reject(new Error('No access token received from Google.'));
+          }
+        }
+      } catch {
+        // Cross-origin error is expected while popup is on Google's domain
+        // Just keep polling
+      }
+    }, 500);
+
+    // Timeout after 2 minutes
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      if (!popup.closed) {
+        popup.close();
+      }
+      reject(new Error('Google sign-in timed out. Please try again.'));
+    }, 120000);
   });
 };
 
@@ -366,27 +288,3 @@ export const convertGoogleEvent = (
     })) || null,
   };
 };
-
-// Type declaration for Google Identity Services
-declare global {
-  interface Window {
-    google: {
-      accounts: {
-        oauth2: {
-          initTokenClient: (config: {
-            client_id: string;
-            scope: string;
-            prompt?: string;
-            login_hint?: string;
-            callback: (response: { access_token?: string; error?: string; error_description?: string; expires_in?: number }) => void;
-            error_callback?: (error: { type: string; message?: string }) => void;
-            [key: string]: unknown;
-          }) => {
-            requestAccessToken: (overrideConfig?: { prompt?: string; login_hint?: string }) => void;
-          };
-          revoke: (token: string, callback: () => void) => void;
-        };
-      };
-    };
-  }
-}
