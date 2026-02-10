@@ -11,6 +11,7 @@ import {
 } from '../types/geodeEmailEvents';
 import { useGeodeEmailStore } from '../store/geodeEmailStore';
 import { useTaskStore } from '../store/taskStore';
+import { canExecuteActions } from '../lib/geodeActionExecutor';
 import { cn } from '../lib/utils';
 
 interface GeodeWorkflowModalProps {
@@ -97,6 +98,13 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
       return;
     }
 
+    // Pre-flight check: verify Gmail is connected before starting
+    const preflight = canExecuteActions();
+    if (!preflight.ready) {
+      setError(`Cannot execute workflow: ${preflight.issues.join(', ')}. Please sign in with Google on this device first.`);
+      return;
+    }
+
     setStep('executing');
     setIsExecuting(true);
     setError(null);
@@ -142,16 +150,48 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
 
       // Now confirm it immediately to execute the workflow
       const geodeTaskId = `task_${eventId}`;
-      await confirmTask(geodeTaskId, 'task-detail');
+      const executionResult = await confirmTask(geodeTaskId, 'task-detail');
 
-      // Also complete the original task
-      await completeTask(task.id);
+      // Check execution result — surface failures to the user
+      if (!executionResult) {
+        throw new Error('Workflow execution returned no result. The confirmation task may not have been created correctly.');
+      }
 
+      const failedActions = executionResult.results.filter(r => !r.success);
       const stateLabel = GEODE_STATES.find(s => s.value === selectedState)?.abbreviation || selectedState;
       const chapterLabel = GEODE_CHAPTER_TYPES.find(c => c.value === selectedChapter)?.label || selectedChapter;
       const workflowInfo = WORKFLOW_INFO[selectedWorkflow];
 
-      setResult(`Successfully executed ${workflowInfo.title} workflow for ${task.short_id}:\n${stateLabel} - ${chapterLabel}${authorName ? `\nAuthor: ${authorName}` : ''}${authorEmail ? `\nEmail: ${authorEmail}` : ''}\n\nCheck your Gmail drafts!`);
+      if (failedActions.length > 0 && failedActions.length === executionResult.results.length) {
+        // All actions failed — show error, don't complete the task
+        const failMessages = failedActions.map(r => `• ${r.message}`).join('\n');
+        throw new Error(`All workflow actions failed:\n${failMessages}`);
+      }
+
+      // At least some actions succeeded — complete the original task
+      await completeTask(task.id);
+
+      if (failedActions.length > 0) {
+        // Partial success
+        const failMessages = failedActions.map(r => `• ${r.message}`).join('\n');
+        setResult(
+          `Partially executed ${workflowInfo.title} for ${task.short_id}:\n` +
+          `${stateLabel} - ${chapterLabel}` +
+          `${authorName ? `\nAuthor: ${authorName}` : ''}` +
+          `${authorEmail ? `\nEmail: ${authorEmail}` : ''}` +
+          `\n\nSome actions failed:\n${failMessages}` +
+          `\n\n${executionResult.summary}`
+        );
+      } else {
+        setResult(
+          `Successfully executed ${workflowInfo.title} for ${task.short_id}:\n` +
+          `${stateLabel} - ${chapterLabel}` +
+          `${authorName ? `\nAuthor: ${authorName}` : ''}` +
+          `${authorEmail ? `\nEmail: ${authorEmail}` : ''}` +
+          `\n\n${executionResult.summary}`
+        );
+      }
+
       setStep('done');
 
       if (onComplete) {
