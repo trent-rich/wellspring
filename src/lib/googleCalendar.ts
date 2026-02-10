@@ -150,10 +150,23 @@ const handleOAuthResponse = (response: { access_token?: string; error?: string; 
   }
 };
 
-// Module-level error callback - logs but doesn't reject (fires on popup close too)
+// Module-level error callback - reject promise if success callback hasn't fired
 const handleOAuthError = (error: { type: string; message?: string }) => {
-  console.log('[Google OAuth] error_callback fired (this is normal):', error);
-  // We ignore this - the success callback is what matters
+  console.error('[Google OAuth] error_callback fired:', JSON.stringify(error), error);
+  isOAuthInProgress = false;
+
+  // If the success callback already resolved, pendingReject will be null — safe to ignore
+  if (pendingReject) {
+    const errorType = error?.type || 'unknown';
+    const errorMsg = error?.message || '';
+    if (errorType === 'popup_closed') {
+      pendingReject(new Error('Google sign-in popup was closed before completing.'));
+    } else {
+      pendingReject(new Error(`Google OAuth error: ${errorType}${errorMsg ? ' — ' + errorMsg : ''}. Check that your Vercel URL is in Google Cloud Console authorized origins.`));
+    }
+    pendingReject = null;
+    pendingResolve = null;
+  }
 };
 
 // Start OAuth flow
