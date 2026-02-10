@@ -19,6 +19,7 @@ import GeodePage from './pages/GeodePage';
 import GeodeMonitoringPage from './pages/GeodeMonitoringPage';
 import JobsPage from './pages/JobsPage';
 import SequencingPage from './pages/SequencingPage';
+import AdminPage from './pages/AdminPage';
 
 // Components
 import Layout from './components/Layout';
@@ -93,8 +94,10 @@ function App() {
     return <LoginPage />;
   }
 
-  const isRestrictedRole = user.role === 'sequencing';
-  const defaultRoute = isRestrictedRole ? '/sequencing' : '/dashboard';
+  const isSequencingOnly = user.role === 'sequencing';
+  const isGeodeOnly = user.role === 'geode';
+  const isRestrictedRole = isSequencingOnly || isGeodeOnly;
+  const defaultRoute = isSequencingOnly ? '/sequencing' : isGeodeOnly ? '/geode' : '/dashboard';
 
   return (
     <>
@@ -118,14 +121,21 @@ function App() {
               <Route path="tasks/:taskId" element={<TasksPage />} />
               <Route path="ideas" element={<IdeasPage />} />
               <Route path="calendar" element={<CalendarPage />} />
-              <Route path="geode" element={<GeodeMonitoringPage />} />
-              <Route path="geode/overview" element={<GeodePage />} />
-              <Route path="geode/reports/:reportId" element={<GeodePage />} />
               <Route path="jobs" element={<JobsPage />} />
+              <Route path="admin" element={<AdminPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </>
           )}
-          <Route path="sequencing" element={<SequencingPage />} />
+          {(!isRestrictedRole || isGeodeOnly) && (
+            <>
+              <Route path="geode" element={<GeodeMonitoringPage />} />
+              <Route path="geode/overview" element={<GeodePage />} />
+              <Route path="geode/reports/:reportId" element={<GeodePage />} />
+            </>
+          )}
+          {(!isRestrictedRole || isSequencingOnly) && (
+            <Route path="sequencing" element={<SequencingPage />} />
+          )}
         </Route>
         <Route path="*" element={<Navigate to={defaultRoute} replace />} />
       </Routes>

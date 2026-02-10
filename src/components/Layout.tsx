@@ -12,6 +12,7 @@ import {
   MapPin,
   Bot,
   GitBranch,
+  Shield,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useAuthStore } from '../store/authStore';
@@ -23,14 +24,15 @@ import GeodeWorkflowModal from './GeodeWorkflowModal';
 import type { TaskWithRelations } from '../types';
 
 const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/tasks', label: 'Tasks', icon: CheckSquare },
-  { path: '/ideas', label: 'Ideas', icon: Lightbulb },
-  { path: '/calendar', label: 'Calendar', icon: Calendar },
-  { path: '/geode', label: 'GEODE Reports', icon: MapPin },
-  { path: '/sequencing', label: 'Sequencing', icon: GitBranch },
-  { path: '/jobs', label: 'Agent Jobs', icon: Bot },
-  { path: '/settings', label: 'Settings', icon: Settings },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
+  { path: '/tasks', label: 'Tasks', icon: CheckSquare, roles: ['admin'] },
+  { path: '/ideas', label: 'Ideas', icon: Lightbulb, roles: ['admin'] },
+  { path: '/calendar', label: 'Calendar', icon: Calendar, roles: ['admin'] },
+  { path: '/geode', label: 'GEODE Reports', icon: MapPin, roles: ['admin', 'geode'] },
+  { path: '/sequencing', label: 'Sequencing', icon: GitBranch, roles: ['admin', 'sequencing'] },
+  { path: '/jobs', label: 'Agent Jobs', icon: Bot, roles: ['admin'] },
+  { path: '/admin', label: 'Admin', icon: Shield, roles: ['admin'] },
+  { path: '/settings', label: 'Settings', icon: Settings, roles: ['admin'] },
 ];
 
 export default function Layout() {
@@ -40,13 +42,10 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [geodeTask, setGeodeTask] = useState<TaskWithRelations | null>(null);
 
-  const isRestrictedRole = user?.role === 'sequencing';
+  const userRole = user?.role || 'admin';
   const filteredNavItems = useMemo(
-    () =>
-      isRestrictedRole
-        ? navItems.filter((item) => item.path === '/sequencing')
-        : navItems,
-    [isRestrictedRole]
+    () => navItems.filter((item) => item.roles.includes(userRole)),
+    [userRole]
   );
 
   const handleSignOut = async () => {

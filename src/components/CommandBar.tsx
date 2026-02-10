@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Mic, Loader2, X, Send } from 'lucide-react';
+import { Mic, Loader2, X, Send, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTaskStore } from '../store/taskStore';
 import { useUserStateStore } from '../store/userStateStore';
+import { useSequencingStore } from '../store/sequencingStore';
 import type { VoiceCommand, TaskWithRelations } from '../types';
 import { cn, parseTaskId } from '../lib/utils';
 
@@ -54,11 +55,79 @@ interface CommandBarProps {
   onGeodeWorkflow?: (task: TaskWithRelations) => void;
 }
 
+function getAnthropicApiKey(): string | undefined {
+  return localStorage.getItem('sequencing_anthropic_key') || import.meta.env.VITE_ANTHROPIC_API_KEY;
+}
+
+// Build a context summary for Claude about the current app state
+function buildAppContext(): string {
+  const taskStore = useTaskStore.getState();
+  const sequencingStore = useSequencingStore.getState();
+  const userStateStore = useUserStateStore.getState();
+
+  const tasks = taskStore.tasks || [];
+  const openTasks = tasks.filter((t) => t.status !== 'completed').slice(0, 10);
+  const invitees = sequencingStore.invitees || [];
+  const confirmed = invitees.filter((i) => i.status === 'confirmed');
+  const pending = invitees.filter((i) => i.status === 'sent' || i.status === 'follow_up_sent');
+
+  return `You are the AI assistant for Wellspring (Watershed Command Center), a project management tool for Project InnerSpace.
+
+Current app state:
+- User state: ${userStateStore.currentState}
+- Open tasks: ${openTasks.length} (${openTasks.slice(0, 5).map((t) => `"${t.title}" [${t.short_id}]`).join(', ')})
+- Sequencing: ${invitees.length} total invitees for CERA Week 2026
+  - Confirmed: ${confirmed.length} (${confirmed.map((i) => i.name).join(', ') || 'none yet'})
+  - Invitation sent: ${pending.length}
+  - Not started: ${invitees.filter((i) => i.status === 'not_started').length}
+
+Available app commands the user can run:
+- "go to [dashboard/tasks/ideas/calendar/geode/sequencing/admin]" - navigate
+- "create task [title]" - create a new task
+- "complete [task ID]" - mark task as done
+- "execute geode [task ID]" - run GEODE workflow
+- "start focus [duration]" - enter focus mode
+- "end focus" - exit focus mode
+
+Respond concisely (1-3 sentences). If the user's question can be answered with app data, answer it. If they need to run a command, suggest the exact command. Be direct and helpful.`;
+}
+
+async function askClaude(question: string): Promise<string | null> {
+  const apiKey = getAnthropicApiKey();
+  if (!apiKey) return null;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        system: buildAppContext(),
+        messages: [{ role: 'user', content: question }],
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.content?.[0]?.text || null;
+    }
+  } catch (err) {
+    console.error('[CommandBar] Claude API error:', err);
+  }
+  return null;
+}
+
 export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
   const [inputValue, setInputValue] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info' | 'ai'; message: string } | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -120,10 +189,11 @@ export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
     }
   }, [isListening]);
 
-  // Clear feedback after delay
+  // Clear feedback after delay (longer for AI responses)
   useEffect(() => {
     if (feedback) {
-      const timer = setTimeout(() => setFeedback(null), 3000);
+      const delay = feedback.type === 'ai' ? 10000 : 3000;
+      const timer = setTimeout(() => setFeedback(null), delay);
       return () => clearTimeout(timer);
     }
   }, [feedback]);
@@ -165,12 +235,14 @@ export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
     }
 
     // Navigation
-    if (lowerText.includes('go to') || lowerText.includes('open') || lowerText.includes('show')) {
+    if (lowerText.includes('go to') || lowerText.startsWith('open ') || lowerText.startsWith('show ')) {
       if (lowerText.includes('dashboard')) return { intent: 'navigate', parameters: { page: '/dashboard' }, raw_transcript: text, confidence: 0.9 };
       if (lowerText.includes('task')) return { intent: 'navigate', parameters: { page: '/tasks' }, raw_transcript: text, confidence: 0.9 };
       if (lowerText.includes('idea')) return { intent: 'navigate', parameters: { page: '/ideas' }, raw_transcript: text, confidence: 0.9 };
       if (lowerText.includes('calendar')) return { intent: 'navigate', parameters: { page: '/calendar' }, raw_transcript: text, confidence: 0.9 };
       if (lowerText.includes('geode')) return { intent: 'navigate', parameters: { page: '/geode' }, raw_transcript: text, confidence: 0.9 };
+      if (lowerText.includes('sequencing')) return { intent: 'navigate', parameters: { page: '/sequencing' }, raw_transcript: text, confidence: 0.9 };
+      if (lowerText.includes('admin')) return { intent: 'navigate', parameters: { page: '/admin' }, raw_transcript: text, confidence: 0.9 };
     }
 
     // Focus mode
@@ -188,6 +260,7 @@ export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
       return { intent: 'end_focus', parameters: {}, raw_transcript: text, confidence: 0.9 };
     }
 
+    // Nothing matched — this will go to Claude
     return { intent: 'unknown', parameters: {}, raw_transcript: text, confidence: 0.3 };
   };
 
@@ -251,8 +324,16 @@ export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
           await exitProtectedState();
           setFeedback({ type: 'success', message: `Focus mode ended` });
           break;
-        default:
-          setFeedback({ type: 'error', message: 'Unknown command. Try "execute geode 0035" or "go to tasks"' });
+        case 'unknown': {
+          // Fall through to Claude AI
+          const aiResponse = await askClaude(cmd.raw_transcript);
+          if (aiResponse) {
+            setFeedback({ type: 'ai', message: aiResponse });
+          } else {
+            setFeedback({ type: 'error', message: 'No API key configured. Add one in Sequencing > Settings.' });
+          }
+          break;
+        }
       }
     } catch (err) {
       console.error('Command error:', err);
@@ -288,12 +369,13 @@ export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
             if (e.key === 'Enter') handleSubmit();
             if (e.key === 'Escape') {
               setInputValue('');
+              setFeedback(null);
               inputRef.current?.blur();
             }
           }}
           onFocus={() => setShowDropdown(true)}
           onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-          placeholder={isListening ? 'Listening...' : 'Type a command...'}
+          placeholder={isListening ? 'Listening...' : 'Ask anything or type a command...'}
           className={cn(
             'w-full pl-4 pr-20 py-2 text-sm border rounded-lg transition-colors',
             isListening
@@ -316,7 +398,7 @@ export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
           )}
 
           {isProcessing ? (
-            <div className="p-1.5">
+            <div className="p-1.5 flex items-center gap-1">
               <Loader2 className="w-4 h-4 animate-spin text-watershed-600" />
             </div>
           ) : inputValue ? (
@@ -349,20 +431,29 @@ export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
           'absolute top-full mt-1 left-0 right-0 px-3 py-2 text-sm rounded-lg shadow-lg z-50',
           feedback.type === 'success' && 'bg-green-50 text-green-700 border border-green-200',
           feedback.type === 'error' && 'bg-red-50 text-red-700 border border-red-200',
-          feedback.type === 'info' && 'bg-blue-50 text-blue-700 border border-blue-200'
+          feedback.type === 'info' && 'bg-blue-50 text-blue-700 border border-blue-200',
+          feedback.type === 'ai' && 'bg-purple-50 text-purple-900 border border-purple-200'
         )}>
-          {feedback.message}
+          {feedback.type === 'ai' && (
+            <div className="flex items-center gap-1.5 mb-1">
+              <Sparkles className="w-3 h-3 text-purple-500" />
+              <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-wider">Claude</span>
+            </div>
+          )}
+          <span className={feedback.type === 'ai' ? 'text-[13px] leading-relaxed' : ''}>
+            {feedback.message}
+          </span>
         </div>
       )}
 
       {/* Command hints dropdown */}
       {showDropdown && !inputValue && !feedback && (
         <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
-          <p className="px-3 py-1 text-xs font-medium text-gray-400 uppercase">Quick Commands</p>
+          <p className="px-3 py-1 text-xs font-medium text-gray-400 uppercase">Commands</p>
           {[
-            { cmd: 'execute geode 0035', desc: 'Run GEODE workflow' },
-            { cmd: 'go to tasks', desc: 'Navigate' },
+            { cmd: 'go to sequencing', desc: 'Navigate' },
             { cmd: 'create task Review proposal', desc: 'New task' },
+            { cmd: 'execute geode 0035', desc: 'GEODE workflow' },
             { cmd: 'start focus 30 min', desc: 'Focus mode' },
           ].map((item) => (
             <button
@@ -377,6 +468,27 @@ export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
               <span className="text-xs text-gray-400">{item.desc}</span>
             </button>
           ))}
+          <div className="border-t border-gray-100 mt-1 pt-1">
+            <p className="px-3 py-1 text-xs font-medium text-purple-400 uppercase flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> Ask Claude
+            </p>
+            {[
+              'How many invitees are confirmed?',
+              'What tasks are due today?',
+              'Summarize sequencing status',
+            ].map((q) => (
+              <button
+                key={q}
+                onClick={() => {
+                  setInputValue(q);
+                  inputRef.current?.focus();
+                }}
+                className="w-full px-3 py-1.5 text-left text-sm hover:bg-purple-50 text-purple-700"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
