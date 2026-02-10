@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head><title>Connecting Google...</title></head>
+<body>
+<p>Connecting to Google... This window will close automatically.</p>
+<script>
+// This page receives the OAuth redirect from Google with the token in the hash.
+// It sends the token back to the parent window via postMessage, then closes.
+try {
+  var hash = window.location.hash.substring(1);
+  var params = {};
+  hash.split('&').forEach(function(pair) {
+    var kv = pair.split('=');
+    params[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
+  });
+
+  if (window.opener) {
+    window.opener.postMessage({
+      type: 'google-oauth-callback',
+      access_token: params.access_token || null,
+      expires_in: params.expires_in || '3600',
+      error: params.error || null,
+      error_description: params.error_description || null,
+      state: params.state || null
+    }, window.location.origin);
+  }
+} catch(e) {
+  if (window.opener) {
+    window.opener.postMessage({
+      type: 'google-oauth-callback',
+      error: 'callback_error',
+      error_description: e.message
+    }, window.location.origin);
+  }
+}
+setTimeout(function() { window.close(); }, 1000);
+</script>
+</body>
+</html>

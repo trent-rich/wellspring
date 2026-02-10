@@ -1,53 +1,44 @@
 // Google Calendar Integration
-// This module handles OAuth and calendar sync using direct OAuth 2.0 implicit flow
-// (bypasses Google Identity Services popup which is broken by COOP in modern Chrome)
+// Uses OAuth 2.0 implicit flow with a dedicated callback page + postMessage
+// to avoid COOP issues with Google Identity Services popup
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 // Scopes requested - these MUST match what's registered in Google Cloud Console
-// OAuth consent screen > Data Access > Scopes
 const SCOPES = [
-  // Calendar - read events for task scheduling
   'https://www.googleapis.com/auth/calendar.readonly',
-
-  // Gmail - read emails for task extraction, send emails directly (not just drafts)
   'https://www.googleapis.com/auth/gmail.readonly',
-  'https://www.googleapis.com/auth/gmail.send',      // Send emails directly from Wellspring
-  'https://www.googleapis.com/auth/gmail.compose',   // Create drafts
-
-  // Drive - file access for artifacts and docs
+  'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/gmail.compose',
   'https://www.googleapis.com/auth/drive.file',
 ].join(' ');
 
-// Store the access token
+// Store the access token in memory
 let accessToken: string | null = null;
 
-// Initialize Google Auth - now a no-op since we use direct OAuth redirect
+// Initialize Google Auth - validates config, no library to load
 export const initGoogleAuth = (): Promise<void> => {
-  console.log('[Google OAuth] initGoogleAuth called (no-op for redirect flow)');
   if (!GOOGLE_CLIENT_ID) {
-    return Promise.reject(new Error('Google Client ID not configured. Please check your environment variables.'));
+    return Promise.reject(new Error('Google Client ID not configured.'));
   }
   return Promise.resolve();
 };
 
-// Start OAuth flow using direct redirect-based implicit grant
-// This avoids the Google Identity Services popup COOP issues entirely
+// Start OAuth flow using a popup + dedicated callback page + postMessage
 export const signInWithGoogle = (loginHint?: string): Promise<string> => {
   return new Promise((resolve, reject) => {
-    console.log('[Google OAuth] Starting redirect-based OAuth flow...');
-
     if (!GOOGLE_CLIENT_ID) {
       reject(new Error('Google Client ID not configured'));
       return;
     }
 
-    // Generate a random state parameter for CSRF protection
+    // CSRF protection
     const state = Math.random().toString(36).substring(2, 15);
     sessionStorage.setItem('google_oauth_state', state);
 
-    // Build the Google OAuth 2.0 authorization URL (implicit grant)
-    const redirectUri = window.location.origin + '/settings';
+    // Redirect to our own /oauth-callback.html page which uses postMessage
+    const redirectUri = window.location.origin + '/oauth-callback.html';
+
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', GOOGLE_CLIENT_ID);
     authUrl.searchParams.set('redirect_uri', redirectUri);
@@ -59,103 +50,92 @@ export const signInWithGoogle = (loginHint?: string): Promise<string> => {
       authUrl.searchParams.set('login_hint', loginHint);
     }
 
+    console.log('[Google OAuth] Opening popup to:', authUrl.toString().substring(0, 100) + '...');
     console.log('[Google OAuth] Redirect URI:', redirectUri);
-    console.log('[Google OAuth] Opening OAuth window...');
 
-    // Open in a popup window
-    const width = 500;
-    const height = 600;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
+    // Open popup
+    const w = 500, h = 600;
+    const left = window.screenX + (window.outerWidth - w) / 2;
+    const top = window.screenY + (window.outerHeight - h) / 2;
     const popup = window.open(
       authUrl.toString(),
       'google-oauth',
-      `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
+      `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no`
     );
 
     if (!popup) {
-      reject(new Error('Popup was blocked. Please allow popups for this site.'));
+      reject(new Error('Popup was blocked. Please allow popups for this site and try again.'));
       return;
     }
 
-    // Poll the popup for the redirect with the token in the hash
-    const pollInterval = setInterval(() => {
-      try {
-        // Check if popup was closed by user
-        if (popup.closed) {
-          clearInterval(pollInterval);
-          reject(new Error('Google sign-in popup was closed.'));
-          return;
-        }
+    let resolved = false;
 
-        // Try to read the popup's URL — this will throw cross-origin errors
-        // until Google redirects back to our origin
-        const popupUrl = popup.location.href;
+    // Listen for postMessage from the callback page
+    const handleMessage = (event: MessageEvent) => {
+      // Only accept messages from our own origin
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'google-oauth-callback') return;
 
-        // Check if we've been redirected back to our site
-        if (popupUrl.startsWith(window.location.origin)) {
-          clearInterval(pollInterval);
+      resolved = true;
+      window.removeEventListener('message', handleMessage);
 
-          // Parse the hash fragment for the access token
-          const hash = popup.location.hash.substring(1); // Remove the #
-          popup.close();
+      const { access_token, expires_in, error, error_description, state: returnedState } = event.data;
 
-          const params = new URLSearchParams(hash);
-          const token = params.get('access_token');
-          const expiresIn = parseInt(params.get('expires_in') || '3600', 10);
-          const returnedState = params.get('state');
-          const error = params.get('error');
-
-          // Check for errors
-          if (error) {
-            const errorDesc = params.get('error_description') || 'Unknown error';
-            console.error('[Google OAuth] Error from Google:', error, errorDesc);
-            reject(new Error(`Google OAuth error: ${error} — ${errorDesc}`));
-            return;
-          }
-
-          // Verify state parameter
-          const savedState = sessionStorage.getItem('google_oauth_state');
-          if (returnedState !== savedState) {
-            console.error('[Google OAuth] State mismatch — possible CSRF');
-            reject(new Error('OAuth state mismatch. Please try again.'));
-            return;
-          }
-          sessionStorage.removeItem('google_oauth_state');
-
-          if (token) {
-            console.log('[Google OAuth] Access token received successfully!');
-            accessToken = token;
-            localStorage.setItem('google_access_token', token);
-
-            // Store in gmail_tokens format for GEODE email executor
-            const gmailTokens = {
-              accessToken: token,
-              expiresAt: Date.now() + (expiresIn * 1000),
-            };
-            localStorage.setItem('gmail_tokens', JSON.stringify(gmailTokens));
-            console.log('[Google OAuth] Tokens stored in localStorage, expires in', expiresIn, 'seconds');
-
-            resolve(token);
-          } else {
-            console.error('[Google OAuth] No access token in redirect');
-            reject(new Error('No access token received from Google.'));
-          }
-        }
-      } catch {
-        // Cross-origin error is expected while popup is on Google's domain
-        // Just keep polling
+      if (error) {
+        console.error('[Google OAuth] Error:', error, error_description);
+        reject(new Error(`Google OAuth error: ${error} — ${error_description || 'Unknown'}`));
+        return;
       }
-    }, 500);
+
+      // Verify state
+      const savedState = sessionStorage.getItem('google_oauth_state');
+      if (returnedState !== savedState) {
+        console.error('[Google OAuth] State mismatch');
+        reject(new Error('OAuth state mismatch. Please try again.'));
+        return;
+      }
+      sessionStorage.removeItem('google_oauth_state');
+
+      if (access_token) {
+        console.log('[Google OAuth] Access token received via postMessage!');
+        accessToken = access_token;
+        localStorage.setItem('google_access_token', access_token);
+
+        const expiresInSec = parseInt(expires_in || '3600', 10);
+        localStorage.setItem('gmail_tokens', JSON.stringify({
+          accessToken: access_token,
+          expiresAt: Date.now() + expiresInSec * 1000,
+        }));
+        console.log('[Google OAuth] Tokens stored, expires in', expiresInSec, 'seconds');
+        resolve(access_token);
+      } else {
+        reject(new Error('No access token received from Google.'));
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
 
     // Timeout after 2 minutes
     setTimeout(() => {
-      clearInterval(pollInterval);
-      if (!popup.closed) {
-        popup.close();
+      if (!resolved) {
+        window.removeEventListener('message', handleMessage);
+        if (popup && !popup.closed) popup.close();
+        reject(new Error('Google sign-in timed out. Please try again.'));
       }
-      reject(new Error('Google sign-in timed out. Please try again.'));
     }, 120000);
+
+    // Also poll for popup closed (as fallback — may not work due to COOP, that's OK)
+    const closedCheck = setInterval(() => {
+      try {
+        if (popup.closed && !resolved) {
+          clearInterval(closedCheck);
+          window.removeEventListener('message', handleMessage);
+          reject(new Error('Google sign-in popup was closed.'));
+        }
+      } catch {
+        // COOP may block this — that's fine, timeout will catch it
+      }
+    }, 1000);
   });
 };
 
@@ -174,7 +154,7 @@ export const isGoogleConnected = (): boolean => {
 export const disconnectGoogle = (): void => {
   accessToken = null;
   localStorage.removeItem('google_access_token');
-  localStorage.removeItem('gmail_tokens'); // Also clear gmail tokens for Ralph AI
+  localStorage.removeItem('gmail_tokens');
 };
 
 // Fetch calendar events from Google
@@ -183,9 +163,7 @@ export const fetchGoogleCalendarEvents = async (
   timeMax: Date
 ): Promise<GoogleCalendarEvent[]> => {
   const token = getGoogleToken();
-  if (!token) {
-    throw new Error('Not connected to Google');
-  }
+  if (!token) throw new Error('Not connected to Google');
 
   const params = new URLSearchParams({
     timeMin: timeMin.toISOString(),
@@ -196,16 +174,11 @@ export const fetchGoogleCalendarEvents = async (
 
   const response = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+    { headers: { Authorization: `Bearer ${token}` } }
   );
 
   if (!response.ok) {
     if (response.status === 401) {
-      // Token expired, clear it
       disconnectGoogle();
       throw new Error('Google session expired. Please reconnect.');
     }
@@ -216,21 +189,13 @@ export const fetchGoogleCalendarEvents = async (
   return data.items || [];
 };
 
-// Types for Google Calendar API response
+// Types
 export interface GoogleCalendarEvent {
   id: string;
   summary: string;
   description?: string;
-  start: {
-    dateTime?: string;
-    date?: string;
-    timeZone?: string;
-  };
-  end: {
-    dateTime?: string;
-    date?: string;
-    timeZone?: string;
-  };
+  start: { dateTime?: string; date?: string; timeZone?: string };
+  end: { dateTime?: string; date?: string; timeZone?: string };
   location?: string;
   hangoutLink?: string;
   attendees?: Array<{
@@ -242,7 +207,6 @@ export interface GoogleCalendarEvent {
   status: string;
 }
 
-// Convert Google event to our CalendarEvent format
 export const convertGoogleEvent = (
   googleEvent: GoogleCalendarEvent,
   userId: string
