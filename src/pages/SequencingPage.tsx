@@ -15,6 +15,9 @@ import {
   Lock,
   Unlock,
   User,
+  Settings,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useSequencingStore } from '../store/sequencingStore';
@@ -356,8 +359,71 @@ function DependencyGraph() {
   );
 }
 
+function ApiKeySettings({ onClose }: { onClose: () => void }) {
+  const [apiKey, setApiKey] = useState(
+    () => localStorage.getItem('sequencing_anthropic_key') || ''
+  );
+  const [showKey, setShowKey] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    if (apiKey.trim()) {
+      localStorage.setItem('sequencing_anthropic_key', apiKey.trim());
+    } else {
+      localStorage.removeItem('sequencing_anthropic_key');
+    }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-gray-900">AI Settings</h3>
+        <button onClick={onClose} className="text-xs text-gray-400 hover:text-gray-600">
+          Close
+        </button>
+      </div>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Anthropic API Key
+          </label>
+          <p className="text-[11px] text-gray-400 mb-2">
+            Used for AI-generated invitation drafts and response classification. Your key is stored locally in this browser only.
+          </p>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <input
+                type={showKey ? 'text' : 'password'}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="sk-ant-..."
+                className="w-full px-3 py-2 pr-10 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-watershed-500 focus:border-watershed-500"
+              />
+              <button
+                onClick={() => setShowKey(!showKey)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+              >
+                {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 text-sm font-medium bg-watershed-600 text-white rounded-lg hover:bg-watershed-700 transition-colors"
+            >
+              {saved ? 'Saved!' : 'Save'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SequencingPage() {
   const [activeTab, setActiveTab] = useState<TabView>('invitations');
+  const [showSettings, setShowSettings] = useState(false);
   const {
     selectedInviteeId,
     setSelectedInviteeId,
@@ -379,14 +445,31 @@ export default function SequencingPage() {
     <div className="max-w-7xl mx-auto">
       {/* Page header */}
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <GitBranch className="w-6 h-6 text-watershed-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Sequencing</h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <GitBranch className="w-6 h-6 text-watershed-600" />
+              <h1 className="text-2xl font-bold text-gray-900">Sequencing</h1>
+            </div>
+            <p className="text-sm text-gray-500">
+              CERA Week 2026 Invitation Cascade — Track invitations, dependencies, and automations
+            </p>
+          </div>
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className={cn(
+              'p-2 rounded-lg transition-colors',
+              showSettings ? 'bg-watershed-50 text-watershed-600' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+            )}
+            title="AI Settings"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
         </div>
-        <p className="text-sm text-gray-500">
-          CERA Week 2026 Invitation Cascade — Track invitations, dependencies, and automations
-        </p>
       </div>
+
+      {/* API Key Settings */}
+      {showSettings && <ApiKeySettings onClose={() => setShowSettings(false)} />}
 
       {/* Stats */}
       <StatsBar />

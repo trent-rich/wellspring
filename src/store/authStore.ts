@@ -12,6 +12,7 @@ interface AuthState {
   // Actions
   initialize: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signUp: (email: string, password: string, fullName?: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
@@ -106,6 +107,17 @@ export const useAuthStore = create<AuthState>()(
                 .eq('id', session.user.id)
                 .single();
 
+              // If signed in via Google OAuth, store the provider token for Gmail/Calendar
+              if (session.provider_token) {
+                localStorage.setItem('google_access_token', session.provider_token);
+                const gmailTokens = {
+                  accessToken: session.provider_token,
+                  expiresAt: Date.now() + (session.expires_in || 3600) * 1000,
+                };
+                localStorage.setItem('gmail_tokens', JSON.stringify(gmailTokens));
+                console.log('[Auth] Google provider token stored for Gmail/Calendar');
+              }
+
               set({
                 user: profile,
                 session: {
@@ -165,6 +177,39 @@ export const useAuthStore = create<AuthState>()(
           console.error('Sign in error:', error);
           set({
             error: error instanceof Error ? error.message : 'Failed to sign in',
+            isLoading: false,
+          });
+          throw error;
+        }
+      },
+
+      signInWithGoogle: async () => {
+        try {
+          set({ isLoading: true, error: null });
+
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: window.location.origin,
+              scopes: [
+                'https://www.googleapis.com/auth/calendar.readonly',
+                'https://www.googleapis.com/auth/gmail.readonly',
+                'https://www.googleapis.com/auth/gmail.send',
+                'https://www.googleapis.com/auth/gmail.compose',
+              ].join(' '),
+              queryParams: {
+                access_type: 'offline',
+                prompt: 'consent',
+              },
+            },
+          });
+
+          if (error) throw error;
+          // Browser will redirect to Google — onAuthStateChange handles the return
+        } catch (error) {
+          console.error('Google sign in error:', error);
+          set({
+            error: error instanceof Error ? error.message : 'Failed to sign in with Google',
             isLoading: false,
           });
           throw error;

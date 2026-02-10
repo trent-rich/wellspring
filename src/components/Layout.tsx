@@ -13,7 +13,7 @@ import {
   Bot,
   GitBranch,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useUserStateStore } from '../store/userStateStore';
 import { cn, getUserStateColor, getUserStateLabel } from '../lib/utils';
@@ -39,6 +39,15 @@ export default function Layout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [geodeTask, setGeodeTask] = useState<TaskWithRelations | null>(null);
+
+  const isRestrictedRole = user?.role === 'sequencing';
+  const filteredNavItems = useMemo(
+    () =>
+      isRestrictedRole
+        ? navItems.filter((item) => item.path === '/sequencing')
+        : navItems,
+    [isRestrictedRole]
+  );
 
   const handleSignOut = async () => {
     await signOut();
@@ -89,7 +98,7 @@ export default function Layout() {
 
         {/* Navigation */}
         <nav className="p-4 space-y-1">
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -149,7 +158,7 @@ export default function Layout() {
 
             {/* Page title - mobile only */}
             <h1 className="text-lg font-semibold text-gray-900 lg:hidden">
-              {navItems.find((item) => location.pathname.startsWith(item.path))?.label || 'Wellspring'}
+              {filteredNavItems.find((item) => location.pathname.startsWith(item.path))?.label || 'Wellspring'}
             </h1>
 
             {/* Command bar - centered, visible on larger screens */}

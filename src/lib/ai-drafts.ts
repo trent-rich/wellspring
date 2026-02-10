@@ -3,7 +3,10 @@
 
 import type { DraftRequest, ResponseClassification } from '../types/sequencing';
 
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
+function getAnthropicApiKey(): string | undefined {
+  // Check localStorage first (user-specific key), then env variable
+  return localStorage.getItem('sequencing_anthropic_key') || import.meta.env.VITE_ANTHROPIC_API_KEY;
+}
 
 const PANEL_CONTEXT: Record<string, string> = {
   '1': 'Panel 1: State Policy Scaffolding — 13-state Geothermal Accelerator, NASEO co-convening, state energy directors.',
@@ -65,13 +68,14 @@ ${leverageNameInfo}
 The event is a closed-door series at CERA Week 2026 (Houston, March 23-27) on geothermal-powered AI infrastructure. NASEO is co-convening. The agenda connects state geothermal policy to hyperscaler demand, community siting standards, and capital formation.`;
 
   // Try direct Anthropic API
-  if (ANTHROPIC_API_KEY) {
+  const apiKey = getAnthropicApiKey();
+  if (apiKey) {
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_API_KEY,
+          'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },
@@ -132,13 +136,14 @@ export async function classifyEmailResponse(
   emailBody: string,
   inviteeName: string
 ): Promise<{ classification: ResponseClassification; confidence: number }> {
-  if (ANTHROPIC_API_KEY) {
+  const classifyKey = getAnthropicApiKey();
+  if (classifyKey) {
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_API_KEY,
+          'x-api-key': classifyKey,
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },

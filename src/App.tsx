@@ -93,34 +93,41 @@ function App() {
     return <LoginPage />;
   }
 
+  const isRestrictedRole = user.role === 'sequencing';
+  const defaultRoute = isRestrictedRole ? '/sequencing' : '/dashboard';
+
   return (
     <>
       {/* Command Palette - always available via Cmd+K */}
-      <CommandPalette />
+      {!isRestrictedRole && <CommandPalette />}
 
       {/* State overlay for protected states */}
-      <StateOverlay />
+      {!isRestrictedRole && <StateOverlay />}
 
       {/* Meeting mode panel */}
-      <MeetingMode />
+      {!isRestrictedRole && <MeetingMode />}
 
       {/* Main app routes */}
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="tasks" element={<TasksPage />} />
-          <Route path="tasks/:taskId" element={<TasksPage />} />
-          <Route path="ideas" element={<IdeasPage />} />
-          <Route path="calendar" element={<CalendarPage />} />
-          <Route path="geode" element={<GeodeMonitoringPage />} />
-          <Route path="geode/overview" element={<GeodePage />} />
-          <Route path="geode/reports/:reportId" element={<GeodePage />} />
+          <Route index element={<Navigate to={defaultRoute} replace />} />
+          {!isRestrictedRole && (
+            <>
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="tasks" element={<TasksPage />} />
+              <Route path="tasks/:taskId" element={<TasksPage />} />
+              <Route path="ideas" element={<IdeasPage />} />
+              <Route path="calendar" element={<CalendarPage />} />
+              <Route path="geode" element={<GeodeMonitoringPage />} />
+              <Route path="geode/overview" element={<GeodePage />} />
+              <Route path="geode/reports/:reportId" element={<GeodePage />} />
+              <Route path="jobs" element={<JobsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </>
+          )}
           <Route path="sequencing" element={<SequencingPage />} />
-          <Route path="jobs" element={<JobsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
         </Route>
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to={defaultRoute} replace />} />
       </Routes>
     </>
   );
