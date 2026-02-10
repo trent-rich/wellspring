@@ -8,17 +8,19 @@ import {
   LogOut,
   Menu,
   X,
-  Mic,
   Command,
   MapPin,
   Bot,
+  GitBranch,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useUserStateStore } from '../store/userStateStore';
 import { cn, getUserStateColor, getUserStateLabel } from '../lib/utils';
 import ScheduleStrip from './ScheduleStrip';
-import VoiceInput from './VoiceInput';
+import CommandBar from './CommandBar';
+import GeodeWorkflowModal from './GeodeWorkflowModal';
+import type { TaskWithRelations } from '../types';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,6 +28,7 @@ const navItems = [
   { path: '/ideas', label: 'Ideas', icon: Lightbulb },
   { path: '/calendar', label: 'Calendar', icon: Calendar },
   { path: '/geode', label: 'GEODE Reports', icon: MapPin },
+  { path: '/sequencing', label: 'Sequencing', icon: GitBranch },
   { path: '/jobs', label: 'Agent Jobs', icon: Bot },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
@@ -35,7 +38,7 @@ export default function Layout() {
   const { currentState } = useUserStateStore();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [voiceActive, setVoiceActive] = useState(false);
+  const [geodeTask, setGeodeTask] = useState<TaskWithRelations | null>(null);
 
   const handleSignOut = async () => {
     await signOut();
@@ -144,33 +147,23 @@ export default function Layout() {
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* Page title */}
+            {/* Page title - mobile only */}
             <h1 className="text-lg font-semibold text-gray-900 lg:hidden">
               {navItems.find((item) => location.pathname.startsWith(item.path))?.label || 'Wellspring'}
             </h1>
 
-            {/* Command palette hint */}
-            <div className="hidden lg:flex items-center gap-2 text-sm text-gray-500">
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">⌘K</kbd>
-              <span>Command palette</span>
+            {/* Command bar - centered, visible on larger screens */}
+            <div className="hidden sm:flex flex-1 justify-center px-4">
+              <CommandBar onGeodeWorkflow={(task) => setGeodeTask(task)} />
             </div>
 
-            {/* Right side actions */}
-            <div className="flex items-center gap-2">
-              {/* Voice input button */}
-              <button
-                onClick={() => setVoiceActive(!voiceActive)}
-                className={cn(
-                  'p-2 rounded-lg transition-colors',
-                  voiceActive
-                    ? 'bg-red-100 text-red-600'
-                    : 'hover:bg-gray-100 text-gray-600'
-                )}
-                title="Voice input (hold Space)"
-              >
-                <Mic className={cn('w-5 h-5', voiceActive && 'animate-pulse')} />
-              </button>
-            </div>
+            {/* Empty div for flex spacing on mobile */}
+            <div className="w-10 lg:hidden" />
+          </div>
+
+          {/* Mobile command bar */}
+          <div className="sm:hidden px-4 pb-2">
+            <CommandBar onGeodeWorkflow={(task) => setGeodeTask(task)} />
           </div>
 
           {/* Schedule strip */}
@@ -183,8 +176,14 @@ export default function Layout() {
         </main>
       </div>
 
-      {/* Voice input overlay */}
-      {voiceActive && <VoiceInput onClose={() => setVoiceActive(false)} />}
+      {/* GEODE Workflow Modal */}
+      {geodeTask && (
+        <GeodeWorkflowModal
+          task={geodeTask}
+          onClose={() => setGeodeTask(null)}
+          onComplete={() => setGeodeTask(null)}
+        />
+      )}
     </div>
   );
 }

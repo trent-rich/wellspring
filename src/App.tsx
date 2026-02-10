@@ -18,6 +18,7 @@ import SettingsPage from './pages/SettingsPage';
 import GeodePage from './pages/GeodePage';
 import GeodeMonitoringPage from './pages/GeodeMonitoringPage';
 import JobsPage from './pages/JobsPage';
+import SequencingPage from './pages/SequencingPage';
 
 // Components
 import Layout from './components/Layout';
@@ -115,6 +116,7 @@ function App() {
           <Route path="geode" element={<GeodeMonitoringPage />} />
           <Route path="geode/overview" element={<GeodePage />} />
           <Route path="geode/reports/:reportId" element={<GeodePage />} />
+          <Route path="sequencing" element={<SequencingPage />} />
           <Route path="jobs" element={<JobsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
