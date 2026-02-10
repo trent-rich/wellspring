@@ -42,7 +42,9 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [geodeTask, setGeodeTask] = useState<TaskWithRelations | null>(null);
 
-  const userRole = user?.role || 'admin';
+  // Normalize role — only restrict for known restricted roles; everything else gets full access
+  const RESTRICTED_ROLES = ['sequencing', 'geode'];
+  const userRole = RESTRICTED_ROLES.includes(user?.role || '') ? user!.role : 'admin';
   const filteredNavItems = useMemo(
     () => navItems.filter((item) => item.roles.includes(userRole)),
     [userRole]
@@ -150,27 +152,28 @@ export default function Layout() {
             {/* Mobile menu button */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
+              aria-label="Open menu"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-6 h-6" />
             </button>
 
-            {/* Page title - mobile only */}
-            <h1 className="text-lg font-semibold text-gray-900 lg:hidden">
+            {/* Page title - mobile/tablet only */}
+            <h1 className="text-lg font-semibold text-gray-900 lg:hidden truncate">
               {filteredNavItems.find((item) => location.pathname.startsWith(item.path))?.label || 'Wellspring'}
             </h1>
 
-            {/* Command bar - centered, visible on larger screens */}
-            <div className="hidden sm:flex flex-1 justify-center px-4">
+            {/* Command bar - centered, only on desktop when sidebar is visible */}
+            <div className="hidden lg:flex flex-1 justify-center px-4">
               <CommandBar onGeodeWorkflow={(task) => setGeodeTask(task)} />
             </div>
 
-            {/* Empty div for flex spacing on mobile */}
+            {/* Empty div for flex spacing on mobile/tablet */}
             <div className="w-10 lg:hidden" />
           </div>
 
-          {/* Mobile command bar */}
-          <div className="sm:hidden px-4 pb-2">
+          {/* Mobile/tablet command bar - below the header row */}
+          <div className="lg:hidden px-4 pb-2">
             <CommandBar onGeodeWorkflow={(task) => setGeodeTask(task)} />
           </div>
 
