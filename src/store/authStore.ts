@@ -50,12 +50,17 @@ export const useAuthStore = create<AuthState>()(
 
             // If no profile exists, create one
             if (!profile) {
+              // Auto-assign role based on email
+              const userEmail = session.user.email!;
+              const autoRole = userEmail === 'jamie@projectinnerspace.org' ? 'sequencing' : 'admin';
+
               const { data: newProfile, error: createError } = await supabase
                 .from('users')
                 .insert({
                   id: session.user.id,
-                  email: session.user.email!,
+                  email: userEmail,
                   full_name: session.user.user_metadata?.full_name || null,
+                  role: autoRole,
                 })
                 .select()
                 .single();

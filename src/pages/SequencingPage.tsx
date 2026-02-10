@@ -21,10 +21,12 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useSequencingStore } from '../store/sequencingStore';
+import { useAuthStore } from '../store/authStore';
 import InviteeDetail from '../components/sequencing/InviteeDetail';
 import DraftComposer from '../components/sequencing/DraftComposer';
 import ResponseTracker from '../components/sequencing/ResponseTracker';
 import type { Invitee, InvitationPhase, InvitationStatus } from '../types/sequencing';
+import { canExecuteForInvitee, isOwnInvitee } from '../types/sequencing';
 
 type TabView = 'invitations' | 'dependencies' | 'automations';
 
@@ -160,6 +162,7 @@ function PhaseSection({
   const [isOpen, setIsOpen] = useState(phase <= 2);
   const { getInviteesByPhase, getPhaseProgress, getDependenciesMet, setShowDraftComposer } =
     useSequencingStore();
+  const { user } = useAuthStore();
 
   const meta = PHASE_META[phase];
   const invitees = getInviteesByPhase(phase);
@@ -208,11 +211,15 @@ function PhaseSection({
           <div className="divide-y divide-gray-50">
             {invitees.map((invitee) => {
               const depsMet = getDependenciesMet(invitee.id);
+              const canExecute = canExecuteForInvitee(user?.email, user?.role || 'admin', invitee.invitedBy);
+              const isOwn = isOwnInvitee(user?.email, invitee.invitedBy);
               return (
                 <InviteeRow
                   key={invitee.id}
                   invitee={invitee}
                   depsMet={depsMet}
+                  canExecute={canExecute}
+                  isOwn={isOwn}
                   onSelect={() => onSelectInvitee(invitee.id)}
                   onDraft={() => setShowDraftComposer(true, invitee.id)}
                 />
@@ -228,16 +235,23 @@ function PhaseSection({
 function InviteeRow({
   invitee,
   depsMet,
+  canExecute,
+  isOwn,
   onSelect,
   onDraft,
 }: {
   invitee: Invitee;
   depsMet: boolean;
+  canExecute: boolean;
+  isOwn: boolean;
   onSelect: () => void;
   onDraft: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group">
+    <div className={cn(
+      'flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group',
+      isOwn && 'bg-watershed-50/30'
+    )}>
       {/* Dependency indicator */}
       <div className="w-5 flex justify-center shrink-0">
         {invitee.dependencies.length > 0 ? (
@@ -261,7 +275,10 @@ function InviteeRow({
         onClick={onSelect}
         className="flex-1 text-left min-w-0"
       >
-        <span className="text-sm font-medium text-gray-900 hover:text-watershed-600 transition-colors">
+        <span className={cn(
+          'text-sm font-medium hover:text-watershed-600 transition-colors',
+          isOwn ? 'text-gray-900' : 'text-gray-500'
+        )}>
           {invitee.name}
         </span>
         <span className="text-xs text-gray-500 ml-2">{invitee.organization}</span>
@@ -282,9 +299,9 @@ function InviteeRow({
         <StatusBadge status={invitee.status} />
       </div>
 
-      {/* Actions */}
+      {/* Actions — only show draft button if user can execute for this invitee */}
       <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-        {(invitee.status === 'not_started' || invitee.status === 'pre_warming') && depsMet && (
+        {canExecute && (invitee.status === 'not_started' || invitee.status === 'pre_warming') && depsMet && (
           <button
             onClick={(e) => {
               e.stopPropagation();

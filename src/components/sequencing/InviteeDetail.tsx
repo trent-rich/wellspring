@@ -9,7 +9,9 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSequencingStore } from '../../store/sequencingStore';
+import { useAuthStore } from '../../store/authStore';
 import type { InvitationStatus } from '../../types/sequencing';
+import { canExecuteForInvitee } from '../../types/sequencing';
 
 const STATUS_FLOW: InvitationStatus[] = [
   'not_started',
@@ -53,11 +55,13 @@ interface InviteeDetailProps {
 export default function InviteeDetail({ inviteeId, onClose, onDraft }: InviteeDetailProps) {
   const { getInvitee, getInvitee: lookupInvitee, setInviteeStatus, getDependenciesMet } =
     useSequencingStore();
+  const { user } = useAuthStore();
 
   const invitee = getInvitee(inviteeId);
   if (!invitee) return null;
 
   const depsMet = getDependenciesMet(inviteeId);
+  const canExecute = canExecuteForInvitee(user?.email, user?.role || 'admin', invitee.invitedBy);
 
   const statusIndex = STATUS_FLOW.indexOf(invitee.status);
   const isTerminal =
@@ -296,9 +300,9 @@ export default function InviteeDetail({ inviteeId, onClose, onDraft }: InviteeDe
             </div>
           )}
 
-          {/* Actions */}
+          {/* Actions — only show execution buttons if user owns this invitee */}
           <div className="border-t border-gray-200 pt-4 space-y-2">
-            {(invitee.status === 'not_started' || invitee.status === 'pre_warming') && depsMet && (
+            {canExecute && (invitee.status === 'not_started' || invitee.status === 'pre_warming') && depsMet && (
               <button
                 onClick={() => onDraft(inviteeId)}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-watershed-600 hover:bg-watershed-700 text-white text-sm font-medium rounded-lg transition-colors"
@@ -307,7 +311,7 @@ export default function InviteeDetail({ inviteeId, onClose, onDraft }: InviteeDe
                 Generate Invitation Draft
               </button>
             )}
-            {invitee.status === 'more_info' && (
+            {canExecute && invitee.status === 'more_info' && (
               <button
                 onClick={() => onDraft(inviteeId)}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
@@ -316,7 +320,7 @@ export default function InviteeDetail({ inviteeId, onClose, onDraft }: InviteeDe
                 Generate Follow-up Draft
               </button>
             )}
-            {invitee.status === 'not_started' && (
+            {canExecute && invitee.status === 'not_started' && (
               <button
                 onClick={() => setInviteeStatus(inviteeId, 'pre_warming')}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
@@ -324,6 +328,11 @@ export default function InviteeDetail({ inviteeId, onClose, onDraft }: InviteeDe
                 <Clock className="w-4 h-4" />
                 Mark as Pre-warming
               </button>
+            )}
+            {!canExecute && (
+              <p className="text-xs text-gray-400 text-center py-2">
+                This invitation is managed by {invitee.invitedBy}
+              </p>
             )}
           </div>
         </div>

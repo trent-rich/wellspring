@@ -114,3 +114,33 @@ export interface SequencingEmailMessage {
   date: string
   isInbound: boolean
 }
+
+// Maps a user email to their sequencing network owner identity
+const EMAIL_TO_OWNER: Record<string, NetworkOwner> = {
+  'jamie@projectinnerspace.org': 'jamie',
+};
+
+export function getNetworkOwnerForEmail(email: string | undefined): NetworkOwner | null {
+  if (!email) return null;
+  return EMAIL_TO_OWNER[email.toLowerCase()] || 'trent'; // Default admin users to 'trent'
+}
+
+// Check if this invitee is the user's "own" execution task
+export function isOwnInvitee(userEmail: string | undefined, invitedBy: NetworkOwner): boolean {
+  const owner = getNetworkOwnerForEmail(userEmail);
+  if (!owner) return false;
+  return owner === invitedBy;
+}
+
+// Check if a user can execute actions on an invitee (draft, send, etc.)
+// Restricted roles (sequencing) can only execute on their own invitees
+// Admin roles can execute on any invitee
+export function canExecuteForInvitee(
+  userEmail: string | undefined,
+  userRole: string,
+  invitedBy: NetworkOwner
+): boolean {
+  if (!userEmail) return false;
+  if (userRole === 'sequencing') return isOwnInvitee(userEmail, invitedBy);
+  return true; // admin can execute on all
+}
