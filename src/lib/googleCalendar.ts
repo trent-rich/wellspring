@@ -172,7 +172,7 @@ const handleOAuthError = (error: { type: string; message?: string }) => {
 // Start OAuth flow
 // IMPORTANT: Create a FRESH token client each time (like the working test page does)
 // Caching the token client breaks the callback in React's bundled environment
-export const signInWithGoogle = (): Promise<string> => {
+export const signInWithGoogle = (loginHint?: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     console.log('[Google OAuth] Starting sign-in flow...');
 
@@ -199,6 +199,7 @@ export const signInWithGoogle = (): Promise<string> => {
 
     console.log('[Google OAuth] Client ID:', GOOGLE_CLIENT_ID.substring(0, 20) + '...');
     console.log('[Google OAuth] Scopes:', SCOPES);
+    console.log('[Google OAuth] Login hint:', loginHint || '(none)');
 
     // Store the resolve/reject for the callback to use
     pendingResolve = resolve;
@@ -210,16 +211,24 @@ export const signInWithGoogle = (): Promise<string> => {
       // The test page works because it creates a new client each time.
       // Caching breaks the callback reference in bundled code.
       console.log('[Google OAuth] Creating fresh token client...');
-      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+      const clientConfig: Record<string, unknown> = {
         client_id: GOOGLE_CLIENT_ID,
         scope: SCOPES,
-        prompt: 'consent',
         callback: handleOAuthResponse,
         error_callback: handleOAuthError,
-      });
+      };
+
+      // Add login_hint if available (helps skip account chooser)
+      if (loginHint) {
+        clientConfig.login_hint = loginHint;
+      }
+
+      const tokenClient = window.google.accounts.oauth2.initTokenClient(clientConfig as any);
 
       console.log('[Google OAuth] Requesting access token...');
-      tokenClient.requestAccessToken();
+      // Use empty string prompt — lets Google decide whether to show consent
+      // 'consent' forces re-consent which can fail in Testing mode
+      tokenClient.requestAccessToken({ prompt: '' });
     } catch (error) {
       console.error('[Google OAuth] Exception during OAuth flow:', error);
       isOAuthInProgress = false;
@@ -368,10 +377,12 @@ declare global {
             client_id: string;
             scope: string;
             prompt?: string;
+            login_hint?: string;
             callback: (response: { access_token?: string; error?: string; error_description?: string; expires_in?: number }) => void;
             error_callback?: (error: { type: string; message?: string }) => void;
+            [key: string]: unknown;
           }) => {
-            requestAccessToken: () => void;
+            requestAccessToken: (overrideConfig?: { prompt?: string; login_hint?: string }) => void;
           };
           revoke: (token: string, callback: () => void) => void;
         };

@@ -402,11 +402,13 @@ export default function SettingsPage() {
                 <button
                   onClick={async () => {
                     try {
+                      setSyncStatus(null);
                       await initGoogleAuth();
-                      await signInWithGoogle();
+                      await signInWithGoogle(user?.email || undefined);
                       setGoogleConnected(true);
                       setSyncStatus('Connected! Click "Sync Calendar" to import events.');
                     } catch (error) {
+                      console.error('[Settings] Google connect error:', error);
                       setSyncStatus(`Error: ${error instanceof Error ? error.message : 'Failed to connect'}`);
                     }
                   }}
