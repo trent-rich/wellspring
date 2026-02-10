@@ -11,6 +11,7 @@ import {
   Send,
   AlertTriangle,
   Lightbulb,
+  Play,
 } from 'lucide-react';
 import { useTaskStore } from '../store/taskStore';
 import { useMessageStore } from '../store/messageStore';
@@ -32,9 +33,10 @@ import {
 interface TaskDetailProps {
   task: TaskWithRelations;
   onClose: () => void;
+  onExecuteGeode?: (task: TaskWithRelations) => void;
 }
 
-export default function TaskDetail({ task, onClose }: TaskDetailProps) {
+export default function TaskDetail({ task, onClose, onExecuteGeode }: TaskDetailProps) {
   const { user } = useAuthStore();
   const {
     updateTask,
@@ -169,6 +171,21 @@ export default function TaskDetail({ task, onClose }: TaskDetailProps) {
                       <ArrowUpRight className="w-4 h-4 inline mr-2" />
                       Escalate
                     </button>
+                    {onExecuteGeode && (
+                      <>
+                        <hr className="my-1" />
+                        <button
+                          onClick={() => {
+                            setShowActions(false);
+                            onExecuteGeode(task);
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 text-green-600"
+                        >
+                          <Play className="w-4 h-4 inline mr-2" />
+                          Execute GEODE Workflow
+                        </button>
+                      </>
+                    )}
                     <hr className="my-1" />
                     <button
                       onClick={handleDelete}

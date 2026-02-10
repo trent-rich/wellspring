@@ -4,6 +4,7 @@ import { Plus, Search } from 'lucide-react';
 import { useTaskStore } from '../store/taskStore';
 import TaskStream from '../components/TaskStream';
 import TaskDetail from '../components/TaskDetail';
+import GeodeWorkflowModal from '../components/GeodeWorkflowModal';
 import type { TaskWithRelations, CreateTaskInput } from '../types';
 
 export default function TasksPage() {
@@ -15,6 +16,7 @@ export default function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<TaskWithRelations | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [geodeTask, setGeodeTask] = useState<TaskWithRelations | null>(null);
 
   // Handle URL parameters
   useEffect(() => {
@@ -92,7 +94,25 @@ export default function TasksPage() {
 
       {/* Task detail drawer */}
       {selectedTask && (
-        <TaskDetail task={selectedTask} onClose={handleCloseDetail} />
+        <TaskDetail
+          task={selectedTask}
+          onClose={handleCloseDetail}
+          onExecuteGeode={(task) => {
+            setGeodeTask(task);
+          }}
+        />
+      )}
+
+      {/* GEODE Workflow Modal */}
+      {geodeTask && (
+        <GeodeWorkflowModal
+          task={geodeTask}
+          onClose={() => setGeodeTask(null)}
+          onComplete={() => {
+            setGeodeTask(null);
+            handleCloseDetail();
+          }}
+        />
       )}
 
       {/* Create task modal */}

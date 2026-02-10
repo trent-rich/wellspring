@@ -31,6 +31,11 @@ interface GeodeEmailStoreState {
   getPendingTasks: () => GeodeConfirmationTask[];
   getTasksByChapter: (state: string, chapterType: string) => GeodeConfirmationTask[];
   getHighPriorityTasks: () => GeodeConfirmationTask[];
+  getTaskByLinkedId: (linkedTaskId: string) => GeodeConfirmationTask | undefined;
+  getTaskByLinkedShortId: (shortId: string) => GeodeConfirmationTask | undefined;
+
+  // Link GEODE task to main task store
+  linkTask: (geodeTaskId: string, linkedTaskId: string, linkedTaskShortId: string) => void;
 
   // Initialize with mock data
   initializeMockData: () => void;
@@ -150,6 +155,27 @@ export const useGeodeEmailStore = create<GeodeEmailStoreState>()(
         return get().confirmationTasks.filter(
           (t) => (t.priority === 'urgent' || t.priority === 'high') && t.status === 'pending'
         );
+      },
+
+      getTaskByLinkedId: (linkedTaskId: string) => {
+        return get().confirmationTasks.find((t) => t.linkedTaskId === linkedTaskId);
+      },
+
+      getTaskByLinkedShortId: (shortId: string) => {
+        const normalized = shortId.toUpperCase().startsWith('T-')
+          ? shortId.toUpperCase()
+          : `T-${shortId.padStart(4, '0')}`;
+        return get().confirmationTasks.find((t) => t.linkedTaskShortId === normalized);
+      },
+
+      linkTask: (geodeTaskId: string, linkedTaskId: string, linkedTaskShortId: string) => {
+        set((state) => ({
+          confirmationTasks: state.confirmationTasks.map((t) =>
+            t.id === geodeTaskId
+              ? { ...t, linkedTaskId, linkedTaskShortId }
+              : t
+          ),
+        }));
       },
 
       initializeMockData: () => {

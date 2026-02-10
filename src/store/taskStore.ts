@@ -160,8 +160,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         .select(`
           *,
           owner:users!tasks_owner_id_fkey(*),
-          assignee:users!tasks_assigned_to_fkey(*),
-          idea:ideas(*)
+          assignee:users!tasks_assigned_to_fkey(*)
         `)
         .eq('short_id', normalizedId)
         .single();

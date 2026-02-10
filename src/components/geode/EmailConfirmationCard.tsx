@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Clock,
   Sparkles,
+  Play,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
@@ -309,34 +310,34 @@ export default function EmailConfirmationCard({ task, compact = false }: EmailCo
           onClick={handleConfirm}
           disabled={isProcessing || task.status === 'confirmed'}
           className={cn(
-            'flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors',
+            'flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-colors touch-target',
             task.status === 'confirmed'
               ? 'bg-green-100 text-green-700'
-              : 'bg-watershed-600 text-white hover:bg-watershed-700',
+              : 'bg-green-600 text-white hover:bg-green-700',
             'disabled:opacity-50 disabled:cursor-not-allowed'
           )}
         >
           {isProcessing ? (
             <>
               <span className="animate-spin">⏳</span>
-              Processing...
+              Executing...
             </>
           ) : task.status === 'confirmed' ? (
             <>
               <Check className="w-4 h-4" />
-              Confirmed
+              Executed
             </>
           ) : (
             <>
-              <Check className="w-4 h-4" />
-              Confirm & Execute
+              <Play className="w-4 h-4" />
+              Execute
             </>
           )}
         </button>
         {task.status !== 'confirmed' && (
           <button
             onClick={handleDismiss}
-            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="px-4 py-3 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors touch-target"
           >
             Dismiss
           </button>

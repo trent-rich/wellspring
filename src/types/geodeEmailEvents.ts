@@ -118,6 +118,10 @@ export interface GeodeConfirmationTask {
   dismissedAt?: string;
   dismissedBy?: string;
   dismissReason?: string;
+
+  // Link to main task store (for bridging/deduplication)
+  linkedTaskId?: string;       // UUID from main tasks table
+  linkedTaskShortId?: string;  // T-XXXX short ID from main tasks table
 }
 
 // ============================================
@@ -201,7 +205,68 @@ export const EMAIL_EVENT_PATTERNS: Record<GeodeEmailEventType, {
 };
 
 // ============================================
-// AUTHOR AGREEMENT FLOW
+// GEODE WORKFLOW TYPES
+// ============================================
+
+export type GeodeWorkflowType = 'author_outreach' | 'author_agreement' | 'contract_signed';
+
+// ============================================
+// AUTHOR OUTREACH FLOW (Pre-Agreement)
+// ============================================
+
+// When reaching out to a prospective author - BEFORE they've agreed
+// AI generates contract document in Google Drive, then creates email draft
+export const AUTHOR_OUTREACH_ACTIONS: GeodeSuggestedAction[] = [
+  {
+    id: 'generate_outreach_contract',
+    actionType: 'generate_outreach_contract',
+    title: 'Generate Contract Document',
+    description: 'AI creates/edits contributor agreement in Google Drive with author and chapter details',
+    priority: 'high',
+    requiresConfirmation: true,
+    autoExecutable: false,
+    params: {
+      templateType: 'contributor_agreement',
+    },
+  },
+  {
+    id: 'send_outreach_email',
+    actionType: 'send_outreach_email',
+    title: 'Send Contract to Prospective Author',
+    description: 'Create Gmail draft to prospective author with contract attached',
+    priority: 'high',
+    requiresConfirmation: true,
+    autoExecutable: false,
+    params: {},
+  },
+  {
+    id: 'update_chapter_status_outreach',
+    actionType: 'advance_step',
+    title: 'Update Chapter Status',
+    description: 'Advance chapter to "Author Outreach" step',
+    priority: 'normal',
+    requiresConfirmation: false,
+    autoExecutable: true,
+    params: {
+      newStep: 'author_outreach',
+    },
+  },
+  {
+    id: 'log_outreach',
+    actionType: 'log_communication',
+    title: 'Log Outreach Attempt',
+    description: 'Record that outreach was sent to prospective author',
+    priority: 'normal',
+    requiresConfirmation: false,
+    autoExecutable: true,
+    params: {
+      communicationType: 'outreach_sent',
+    },
+  },
+];
+
+// ============================================
+// AUTHOR AGREEMENT FLOW (Post-Agreement)
 // ============================================
 
 // When an author agrees, these are the automatic next steps
@@ -341,6 +406,92 @@ export const MOCK_EMAIL_EVENTS: GeodeEmailEvent[] = [
     createdAt: '2026-02-04T08:42:30Z',
   },
 ];
+
+// ============================================
+// WORKFLOW INFERENCE
+// ============================================
+
+/**
+ * Infer which GEODE workflow to execute based on task context
+ * Returns 'author_outreach' for prospective authors, 'author_agreement' for confirmed authors
+ */
+export function inferGeodeWorkflowType(context: {
+  taskTitle?: string;
+  taskDescription?: string;
+  hasAuthorConfirmation?: boolean;
+  chapterStatus?: string;
+}): GeodeWorkflowType {
+  const { taskTitle = '', taskDescription = '', hasAuthorConfirmation, chapterStatus } = context;
+
+  const titleLower = taskTitle.toLowerCase();
+  const descLower = taskDescription.toLowerCase();
+  const combined = `${titleLower} ${descLower}`;
+
+  // Check for explicit agreement indicators
+  const agreementKeywords = [
+    'agreed', 'confirmed', 'accepted', 'signed', 'process',
+    'send to dani', 'dani', 'e-signature', 'esignature',
+    'contract signed', 'signature complete'
+  ];
+
+  const hasAgreementKeyword = agreementKeywords.some(kw => combined.includes(kw));
+
+  // Check for outreach indicators
+  const outreachKeywords = [
+    'outreach', 'prospective', 'invite', 'invitation', 'reach out',
+    'send contract to', 'contact', 'initial', 'introduce',
+    'potential author', 'candidate'
+  ];
+
+  const hasOutreachKeyword = outreachKeywords.some(kw => combined.includes(kw));
+
+  // Check chapter status if available
+  const outreachStatuses = ['not_started', 'identify_author', 'author_outreach'];
+  const agreementStatuses = ['author_agreed', 'send_contract', 'contract_pending'];
+
+  if (chapterStatus) {
+    if (outreachStatuses.includes(chapterStatus)) return 'author_outreach';
+    if (agreementStatuses.includes(chapterStatus)) return 'author_agreement';
+  }
+
+  // Explicit confirmation flag takes precedence
+  if (hasAuthorConfirmation === true) return 'author_agreement';
+  if (hasAuthorConfirmation === false) return 'author_outreach';
+
+  // Keyword-based inference
+  if (hasAgreementKeyword && !hasOutreachKeyword) return 'author_agreement';
+  if (hasOutreachKeyword && !hasAgreementKeyword) return 'author_outreach';
+
+  // Default: If task mentions "execute geode" without clear context,
+  // assume outreach since that comes first in the workflow
+  if (combined.includes('execute') && (combined.includes('geode') || combined.includes('contract'))) {
+    // Check if it mentions sending TO an author (outreach) vs sending to Dani (agreement)
+    if (combined.includes('to dani') || combined.includes('for dani')) {
+      return 'author_agreement';
+    }
+    // Default to outreach - the more common first step
+    return 'author_outreach';
+  }
+
+  // Final fallback: outreach (first step in process)
+  return 'author_outreach';
+}
+
+/**
+ * Get the appropriate actions for a workflow type
+ */
+export function getActionsForWorkflow(workflowType: GeodeWorkflowType): GeodeSuggestedAction[] {
+  switch (workflowType) {
+    case 'author_outreach':
+      return AUTHOR_OUTREACH_ACTIONS;
+    case 'author_agreement':
+      return AUTHOR_AGREEMENT_ACTIONS;
+    case 'contract_signed':
+      return CONTRACT_SIGNED_ACTIONS;
+    default:
+      return AUTHOR_OUTREACH_ACTIONS;
+  }
+}
 
 // ============================================
 // CONFIRMATION TASK FACTORY

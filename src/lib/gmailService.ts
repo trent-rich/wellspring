@@ -37,10 +37,24 @@ export function clearTokens(): void {
 
 export function isTokenValid(): boolean {
   const tokens = getStoredTokens();
-  if (!tokens) return false;
+  if (!tokens) {
+    console.log('[GmailService] isTokenValid: No tokens found');
+    return false;
+  }
 
-  // Add 5 minute buffer before expiry
-  return tokens.expiresAt > Date.now() + 5 * 60 * 1000;
+  const now = Date.now();
+  const expiresAt = tokens.expiresAt;
+  const isValid = expiresAt > now + 5 * 60 * 1000;
+
+  console.log('[GmailService] isTokenValid:', {
+    hasTokens: true,
+    expiresAt: new Date(expiresAt).toISOString(),
+    now: new Date(now).toISOString(),
+    isValid,
+    minutesUntilExpiry: Math.round((expiresAt - now) / 60000),
+  });
+
+  return isValid;
 }
 
 export function getAccessToken(): string | null {
@@ -57,11 +71,17 @@ async function gmailFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  console.log('[GmailService] gmailFetch called:', endpoint, options.method || 'GET');
+
   const accessToken = getAccessToken();
+  console.log('[GmailService] Access token exists?', !!accessToken);
+
   if (!accessToken) {
+    console.error('[GmailService] No valid access token!');
     throw new Error('No valid Gmail access token. Please reconnect your Google account.');
   }
 
+  console.log('[GmailService] Making request to:', `${GMAIL_API_BASE}${endpoint}`);
   const response = await fetch(`${GMAIL_API_BASE}${endpoint}`, {
     ...options,
     headers: {
@@ -71,8 +91,11 @@ async function gmailFetch<T>(
     },
   });
 
+  console.log('[GmailService] Response status:', response.status);
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
+    console.error('[GmailService] API error:', error);
     throw new Error(
       `Gmail API error: ${response.status} - ${error.error?.message || response.statusText}`
     );
@@ -533,8 +556,15 @@ export async function createDraft(options: DraftEmailOptions): Promise<{
   draftId?: string;
   error?: string;
 }> {
+  console.log('[GmailService] createDraft called with:', {
+    to: options.to,
+    subject: options.subject,
+    bodyPreview: options.body.substring(0, 100) + '...',
+  });
+
   try {
     const raw = encodeEmail(options);
+    console.log('[GmailService] Email encoded, calling Gmail API...');
 
     const response = await gmailFetch<{
       id: string;
@@ -546,6 +576,7 @@ export async function createDraft(options: DraftEmailOptions): Promise<{
       }),
     });
 
+    console.log('[GmailService] Draft created successfully:', response.id);
     return {
       success: true,
       draftId: response.id,

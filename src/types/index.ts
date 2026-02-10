@@ -381,6 +381,7 @@ export type VoiceIntent =
   | 'snooze_task'
   | 'assign_task'
   | 'create_task'
+  | 'execute_geode'
   | 'whats_next'
   | 'join_meeting'
   | 'start_focus'

@@ -1,0 +1,384 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Mic, Loader2, X, Send } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useTaskStore } from '../store/taskStore';
+import { useUserStateStore } from '../store/userStateStore';
+import type { VoiceCommand, TaskWithRelations } from '../types';
+import { cn, parseTaskId } from '../lib/utils';
+
+// Web Speech API types
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  onend: (() => void) | null;
+  onstart: (() => void) | null;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
+  }
+}
+
+interface CommandBarProps {
+  onGeodeWorkflow?: (task: TaskWithRelations) => void;
+}
+
+export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
+  const [inputValue, setInputValue] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+
+  const { fetchTaskByShortId, completeTask, createTask } = useTaskStore();
+  const { enterFocusMode, exitProtectedState } = useUserStateStore();
+
+  // Initialize speech recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setInputValue(transcript);
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognition.abort();
+    };
+  }, []);
+
+  // Toggle voice input
+  const toggleVoice = useCallback(() => {
+    if (!recognitionRef.current) {
+      setFeedback({ type: 'error', message: 'Voice not supported' });
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      setInputValue('');
+      recognitionRef.current.start();
+    }
+  }, [isListening]);
+
+  // Clear feedback after delay
+  useEffect(() => {
+    if (feedback) {
+      const timer = setTimeout(() => setFeedback(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedback]);
+
+  // Parse voice command
+  const parseCommand = (text: string): VoiceCommand => {
+    const lowerText = text.toLowerCase().trim();
+
+    // Open task by ID
+    const taskId = parseTaskId(text);
+    if (taskId && (lowerText.includes('open') || lowerText.includes('show'))) {
+      return { intent: 'open_task', parameters: { taskId }, raw_transcript: text, confidence: 0.9 };
+    }
+
+    // Complete task
+    if (lowerText.includes('complete') || lowerText.includes('done') || lowerText.includes('finish')) {
+      const id = parseTaskId(text);
+      if (id) {
+        return { intent: 'complete_task', parameters: { taskId: id }, raw_transcript: text, confidence: 0.85 };
+      }
+    }
+
+    // Execute GEODE workflow
+    if (lowerText.includes('execute') && (lowerText.includes('geode') || lowerText.includes('workflow') || lowerText.includes('contract'))) {
+      const taskIdMatches = text.match(/\b0*(\d{1,4})\b/g);
+      const taskIds = taskIdMatches ? taskIdMatches.map(m => m.replace(/^0+/, '') || '0').join(',') : undefined;
+      return {
+        intent: 'execute_geode' as VoiceCommand['intent'],
+        parameters: taskIds ? { taskIds } : {},
+        raw_transcript: text,
+        confidence: 0.85,
+      };
+    }
+
+    // Create task
+    if (lowerText.includes('create task') || lowerText.includes('new task') || lowerText.includes('add task')) {
+      const title = text.replace(/create\s+task|new\s+task|add\s+task/i, '').trim();
+      return { intent: 'create_task', parameters: { title }, raw_transcript: text, confidence: 0.75 };
+    }
+
+    // Navigation
+    if (lowerText.includes('go to') || lowerText.includes('open') || lowerText.includes('show')) {
+      if (lowerText.includes('dashboard')) return { intent: 'navigate', parameters: { page: '/dashboard' }, raw_transcript: text, confidence: 0.9 };
+      if (lowerText.includes('task')) return { intent: 'navigate', parameters: { page: '/tasks' }, raw_transcript: text, confidence: 0.9 };
+      if (lowerText.includes('idea')) return { intent: 'navigate', parameters: { page: '/ideas' }, raw_transcript: text, confidence: 0.9 };
+      if (lowerText.includes('calendar')) return { intent: 'navigate', parameters: { page: '/calendar' }, raw_transcript: text, confidence: 0.9 };
+      if (lowerText.includes('geode')) return { intent: 'navigate', parameters: { page: '/geode' }, raw_transcript: text, confidence: 0.9 };
+    }
+
+    // Focus mode
+    if (lowerText.includes('start focus') || lowerText.includes('focus mode')) {
+      const durationMatch = text.match(/(\d+)\s*(hour|minute|min|hr)/i);
+      const duration = durationMatch
+        ? durationMatch[2].startsWith('hour') || durationMatch[2].startsWith('hr')
+          ? parseInt(durationMatch[1]) * 60
+          : parseInt(durationMatch[1])
+        : 60;
+      return { intent: 'start_focus', parameters: { duration }, raw_transcript: text, confidence: 0.85 };
+    }
+
+    if (lowerText.includes('end focus') || lowerText.includes('stop focus')) {
+      return { intent: 'end_focus', parameters: {}, raw_transcript: text, confidence: 0.9 };
+    }
+
+    return { intent: 'unknown', parameters: {}, raw_transcript: text, confidence: 0.3 };
+  };
+
+  // Execute command
+  const executeCommand = async (cmd: VoiceCommand) => {
+    try {
+      switch (cmd.intent) {
+        case 'open_task': {
+          const task = await fetchTaskByShortId(cmd.parameters.taskId as string);
+          if (task) {
+            navigate(`/tasks/${task.id}`);
+            setFeedback({ type: 'success', message: `Opening ${task.short_id}` });
+          } else {
+            setFeedback({ type: 'error', message: 'Task not found' });
+          }
+          break;
+        }
+        case 'complete_task': {
+          const task = await fetchTaskByShortId(cmd.parameters.taskId as string);
+          if (task) {
+            await completeTask(task.id);
+            setFeedback({ type: 'success', message: `Completed ${task.short_id}` });
+          }
+          break;
+        }
+        case 'execute_geode': {
+          const taskIdsParam = cmd.parameters.taskIds as string;
+          if (taskIdsParam) {
+            const taskIds = taskIdsParam.split(',').map(id => id.trim());
+            for (const taskId of taskIds) {
+              const mainTask = await fetchTaskByShortId(taskId);
+              if (mainTask && onGeodeWorkflow) {
+                onGeodeWorkflow(mainTask);
+                setFeedback({ type: 'info', message: `GEODE workflow for ${mainTask.short_id}` });
+                return;
+              }
+            }
+            setFeedback({ type: 'error', message: 'Task not found' });
+          } else {
+            setFeedback({ type: 'error', message: 'Specify task ID (e.g., "execute geode 0035")' });
+          }
+          break;
+        }
+        case 'create_task': {
+          const title = cmd.parameters.title as string;
+          if (title) {
+            await createTask({ title, priority: 50 });
+            setFeedback({ type: 'success', message: `Created task: ${title}` });
+          }
+          break;
+        }
+        case 'navigate':
+          navigate(cmd.parameters.page as string);
+          setFeedback({ type: 'success', message: `Navigating...` });
+          break;
+        case 'start_focus':
+          await enterFocusMode(cmd.parameters.duration as number);
+          setFeedback({ type: 'success', message: `Focus mode started` });
+          break;
+        case 'end_focus':
+          await exitProtectedState();
+          setFeedback({ type: 'success', message: `Focus mode ended` });
+          break;
+        default:
+          setFeedback({ type: 'error', message: 'Unknown command. Try "execute geode 0035" or "go to tasks"' });
+      }
+    } catch (err) {
+      console.error('Command error:', err);
+      setFeedback({ type: 'error', message: 'Command failed' });
+    }
+  };
+
+  // Handle submit
+  const handleSubmit = async () => {
+    if (!inputValue.trim() || isProcessing) return;
+
+    setIsProcessing(true);
+    setShowDropdown(false);
+
+    try {
+      const cmd = parseCommand(inputValue);
+      await executeCommand(cmd);
+    } finally {
+      setIsProcessing(false);
+      setInputValue('');
+    }
+  };
+
+  return (
+    <div className="relative flex-1 max-w-md">
+      <div className="relative flex items-center">
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSubmit();
+            if (e.key === 'Escape') {
+              setInputValue('');
+              inputRef.current?.blur();
+            }
+          }}
+          onFocus={() => setShowDropdown(true)}
+          onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+          placeholder={isListening ? 'Listening...' : 'Type a command...'}
+          className={cn(
+            'w-full pl-4 pr-20 py-2 text-sm border rounded-lg transition-colors',
+            isListening
+              ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-1 focus:ring-red-400'
+              : 'border-gray-200 focus:border-watershed-500 focus:ring-1 focus:ring-watershed-500',
+            'focus:outline-none'
+          )}
+          disabled={isProcessing}
+        />
+
+        {/* Right side buttons inside input */}
+        <div className="absolute right-1 flex items-center gap-1">
+          {inputValue && !isProcessing && (
+            <button
+              onClick={() => setInputValue('')}
+              className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+
+          {isProcessing ? (
+            <div className="p-1.5">
+              <Loader2 className="w-4 h-4 animate-spin text-watershed-600" />
+            </div>
+          ) : inputValue ? (
+            <button
+              onClick={handleSubmit}
+              className="p-1.5 bg-watershed-600 hover:bg-watershed-700 rounded text-white"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={toggleVoice}
+              className={cn(
+                'p-1.5 rounded transition-colors',
+                isListening
+                  ? 'bg-red-500 text-white animate-pulse'
+                  : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'
+              )}
+              title={isListening ? 'Stop listening' : 'Voice input'}
+            >
+              <Mic className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Feedback message */}
+      {feedback && (
+        <div className={cn(
+          'absolute top-full mt-1 left-0 right-0 px-3 py-2 text-sm rounded-lg shadow-lg z-50',
+          feedback.type === 'success' && 'bg-green-50 text-green-700 border border-green-200',
+          feedback.type === 'error' && 'bg-red-50 text-red-700 border border-red-200',
+          feedback.type === 'info' && 'bg-blue-50 text-blue-700 border border-blue-200'
+        )}>
+          {feedback.message}
+        </div>
+      )}
+
+      {/* Command hints dropdown */}
+      {showDropdown && !inputValue && !feedback && (
+        <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
+          <p className="px-3 py-1 text-xs font-medium text-gray-400 uppercase">Quick Commands</p>
+          {[
+            { cmd: 'execute geode 0035', desc: 'Run GEODE workflow' },
+            { cmd: 'go to tasks', desc: 'Navigate' },
+            { cmd: 'create task Review proposal', desc: 'New task' },
+            { cmd: 'start focus 30 min', desc: 'Focus mode' },
+          ].map((item) => (
+            <button
+              key={item.cmd}
+              onClick={() => {
+                setInputValue(item.cmd);
+                inputRef.current?.focus();
+              }}
+              className="w-full px-3 py-1.5 text-left text-sm hover:bg-gray-50 flex items-center justify-between"
+            >
+              <span className="text-gray-700">{item.cmd}</span>
+              <span className="text-xs text-gray-400">{item.desc}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
