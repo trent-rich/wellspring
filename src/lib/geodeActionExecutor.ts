@@ -18,6 +18,104 @@ import {
 } from './gmailService';
 import type { GeodeSuggestedAction, GeodeConfirmationTask } from '../types/geodeEmailEvents';
 import { GEODE_STATES, GEODE_CHAPTER_TYPES } from '../types/geode';
+import { supabase } from './supabase';
+
+// ============================================
+// SUPABASE STORAGE - Contract File Lookup
+// ============================================
+
+/**
+ * Search Supabase Storage for a contract file matching state/author
+ * Storage structure: contracts/{STATE_ABBREV}/InnerSpace_Agreement_{STATE}_{Chapter}_{Initials}.pdf
+ * Returns base64-encoded file content if found
+ */
+async function findContractInStorage(
+  stateAbbrev: string,
+  authorName: string,
+  chapterTitle: string
+): Promise<{ filename: string; mimeType: string; content: string } | null> {
+  try {
+    // List files in the state folder
+    const { data: files, error } = await supabase.storage
+      .from('contracts')
+      .list(stateAbbrev, { limit: 100 });
+
+    if (error || !files || files.length === 0) {
+      console.log('[ContractStorage] No files found in', stateAbbrev, error?.message);
+      return null;
+    }
+
+    // Get author initials for matching
+    const initials = authorName
+      .split(/\s+/)
+      .map(word => word.charAt(0).toUpperCase())
+      .join('');
+
+    // Look for matching PDF first, then Word doc
+    const normalizedChapter = chapterTitle.replace(/[^a-zA-Z]/g, '').toLowerCase();
+
+    const matchFile = (filename: string): boolean => {
+      const lower = filename.toLowerCase();
+      // Match by initials
+      if (lower.includes(initials.toLowerCase())) return true;
+      // Match by chapter name
+      if (lower.includes(normalizedChapter)) return true;
+      // Match by author last name
+      const lastName = authorName.split(/\s+/).pop()?.toLowerCase() || '';
+      if (lastName.length > 2 && lower.includes(lastName)) return true;
+      return false;
+    };
+
+    // Prefer PDFs over Word docs
+    const pdfs = files.filter(f => f.name.endsWith('.pdf'));
+    const docs = files.filter(f => f.name.endsWith('.docx') || f.name.endsWith('.doc'));
+
+    const matchedPdf = pdfs.find(f => matchFile(f.name));
+    const matchedDoc = docs.find(f => matchFile(f.name));
+    const matched = matchedPdf || matchedDoc;
+
+    if (!matched) {
+      console.log('[ContractStorage] No matching file for', authorName, 'in', stateAbbrev);
+      console.log('[ContractStorage] Available files:', files.map(f => f.name));
+      return null;
+    }
+
+    // Download the file
+    const filePath = `${stateAbbrev}/${matched.name}`;
+    console.log('[ContractStorage] Downloading:', filePath);
+
+    const { data: blob, error: downloadError } = await supabase.storage
+      .from('contracts')
+      .download(filePath);
+
+    if (downloadError || !blob) {
+      console.error('[ContractStorage] Download failed:', downloadError?.message);
+      return null;
+    }
+
+    // Convert to base64
+    const arrayBuffer = await blob.arrayBuffer();
+    const base64 = btoa(
+      new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
+
+    const isPdf = matched.name.endsWith('.pdf');
+    const mimeType = isPdf
+      ? 'application/pdf'
+      : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+    console.log('[ContractStorage] Loaded:', matched.name, `(${Math.round(base64.length / 1024)}KB base64)`);
+
+    return {
+      filename: matched.name,
+      mimeType,
+      content: base64,
+    };
+  } catch (error) {
+    console.error('[ContractStorage] Error:', error);
+    return null;
+  }
+}
 
 // ============================================
 // TYPES
@@ -285,41 +383,18 @@ async function executeSendOutreachEmail(
   let attachmentSource = '';
 
   // Search for contract in local folder
-  console.log('[ActionExecutor] Searching for outreach contract file...');
-  try {
-    const searchResponse = await fetch(
-      `http://localhost:3002/api/contracts/search?` +
-      `authorName=${encodeURIComponent(authorName)}` +
-      `&stateAbbrev=${encodeURIComponent(stateInfo.abbreviation)}` +
-      `&chapterTitle=${encodeURIComponent(chapterInfo.label)}` +
-      `&type=outreach`
-    );
+  // Search Supabase Storage for contract file
+  console.log('[ActionExecutor] Searching for outreach contract in Supabase Storage...');
+  const storageResult = await findContractInStorage(
+    stateInfo.abbreviation,
+    authorName,
+    chapterInfo.label
+  );
 
-    if (searchResponse.ok) {
-      const searchResult = await searchResponse.json();
-      console.log('[ActionExecutor] Contract search result:', searchResult);
-
-      const localFilePath = searchResult.signatureReadyPdf?.path || searchResult.pdf?.path || searchResult.wordDoc?.path;
-
-      if (localFilePath) {
-        const readResponse = await fetch(
-          `http://localhost:3002/api/files/read?path=${encodeURIComponent(localFilePath)}`
-        );
-
-        if (readResponse.ok) {
-          const fileData = await readResponse.json();
-          attachment = {
-            filename: fileData.filename,
-            mimeType: fileData.mimeType,
-            content: fileData.data,
-          };
-          attachmentSource = 'local contracts folder';
-          console.log('[ActionExecutor] Found contract attachment:', fileData.filename);
-        }
-      }
-    }
-  } catch (error) {
-    console.warn('[ActionExecutor] Local file server not available:', error);
+  if (storageResult) {
+    attachment = storageResult;
+    attachmentSource = 'Supabase Storage';
+    console.log('[ActionExecutor] Found contract in storage:', storageResult.filename);
   }
 
   // Create draft with or without attachment
@@ -475,70 +550,18 @@ async function executeSendContract(
   let attachment: { filename: string; mimeType: string; content: string } | undefined;
   let attachmentSource = '';
 
-  // PRIORITY 1: Search for PDF in local contracts folder (file server)
-  console.log('[ActionExecutor] Searching for local contract files...');
-  try {
-    const searchResponse = await fetch(
-      `http://localhost:3002/api/contracts/search?` +
-      `authorName=${encodeURIComponent(authorName)}` +
-      `&stateAbbrev=${encodeURIComponent(stateInfo.abbreviation)}` +
-      `&chapterTitle=${encodeURIComponent(chapterInfo.label)}`
-    );
+  // PRIORITY 1: Search Supabase Storage for contract file
+  console.log('[ActionExecutor] Searching for contract in Supabase Storage...');
+  const storageContract = await findContractInStorage(
+    stateInfo.abbreviation,
+    authorName,
+    chapterInfo.label
+  );
 
-    if (searchResponse.ok) {
-      const searchResult = await searchResponse.json();
-      console.log('[ActionExecutor] Local contract search result:', searchResult);
-
-      // Prefer signature-ready PDF
-      let localFilePath = searchResult.signatureReadyPdf?.path || searchResult.pdf?.path;
-
-      // If only Word doc exists, try to convert it to PDF
-      if (!localFilePath && searchResult.wordDoc?.path) {
-        console.log('[ActionExecutor] Found Word doc, attempting PDF conversion...');
-
-        const convertResponse = await fetch('http://localhost:3002/api/contracts/convert-to-pdf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            wordDocPath: searchResult.wordDoc.path,
-            // Output to signature-ready folder
-            outputPdfPath: searchResult.wordDoc.path
-              .replace('/contracts/', '/contracts/GEODE Signature Ready Contracts/')
-              .replace(/\.docx?$/i, '.pdf'),
-          }),
-        });
-
-        if (convertResponse.ok) {
-          const convertResult = await convertResponse.json();
-          if (convertResult.success) {
-            localFilePath = convertResult.pdfPath;
-            console.log('[ActionExecutor] PDF conversion successful:', localFilePath);
-          }
-        }
-      }
-
-      // Read the local file if found
-      if (localFilePath) {
-        const readResponse = await fetch(
-          `http://localhost:3002/api/files/read?path=${encodeURIComponent(localFilePath)}`
-        );
-
-        if (readResponse.ok) {
-          const fileData = await readResponse.json();
-          attachment = {
-            filename: fileData.filename,
-            mimeType: fileData.mimeType,
-            content: fileData.data,
-          };
-          attachmentSource = localFilePath.includes('Signature Ready')
-            ? 'local (signature-ready folder)'
-            : 'local (contracts folder)';
-          console.log('[ActionExecutor] Successfully loaded local contract:', fileData.filename);
-        }
-      }
-    }
-  } catch (error) {
-    console.warn('[ActionExecutor] Local file server not available:', error);
+  if (storageContract) {
+    attachment = storageContract;
+    attachmentSource = 'Supabase Storage';
+    console.log('[ActionExecutor] Found contract in storage:', storageContract.filename);
   }
 
   // PRIORITY 2: Check if task has a stored contract attachment reference (from Gmail)
