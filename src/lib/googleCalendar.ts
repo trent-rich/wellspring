@@ -140,6 +140,8 @@ export const signInWithGoogle = (loginHint?: string): Promise<string> => {
 };
 
 // Get stored token — checks both in-memory and localStorage (SSO or standalone flow)
+// This is SYNCHRONOUS — returns the current token if valid, or null if expired.
+// For callers in async contexts, use getGoogleTokenAsync() which can auto-refresh.
 export const getGoogleToken = (): string | null => {
   if (accessToken) return accessToken;
 
@@ -157,9 +159,41 @@ export const getGoogleToken = (): string | null => {
   return localStorage.getItem('google_access_token');
 };
 
-// Check if connected (has a valid, non-expired token)
+/**
+ * Async version of getGoogleToken that will attempt a silent refresh
+ * if the access token is expired and a refresh token is available.
+ * Use this in async contexts (API calls, workflow execution, etc.)
+ */
+export const getGoogleTokenAsync = async (): Promise<string | null> => {
+  // First, try the synchronous path
+  const token = getGoogleToken();
+  if (token) return token;
+
+  // Token expired or missing — try silent refresh
+  try {
+    const { refreshGoogleTokenNow, hasRefreshToken } = await import('./tokenRefresh');
+    if (hasRefreshToken()) {
+      console.log('[GoogleCalendar] Token expired — attempting silent refresh...');
+      const newToken = await refreshGoogleTokenNow();
+      if (newToken) {
+        accessToken = newToken; // Update in-memory cache
+        return newToken;
+      }
+    }
+  } catch (error) {
+    console.error('[GoogleCalendar] Silent refresh failed:', error);
+  }
+
+  return null;
+};
+
+// Check if connected (has a valid, non-expired token OR a refresh token for silent renewal)
 export const isGoogleConnected = (): boolean => {
-  return !!getGoogleToken();
+  if (getGoogleToken()) return true;
+
+  // Even if the access token is expired, we're "connected" if we have a refresh token
+  // The background timer or getGoogleTokenAsync() will handle the refresh
+  return !!(localStorage.getItem('google_rt_enc') || localStorage.getItem('google_refresh_token'));
 };
 
 // Disconnect
@@ -167,6 +201,9 @@ export const disconnectGoogle = (): void => {
   accessToken = null;
   localStorage.removeItem('google_access_token');
   localStorage.removeItem('gmail_tokens');
+  localStorage.removeItem('google_rt_enc');
+  localStorage.removeItem('google_rt_uid');
+  localStorage.removeItem('google_refresh_token');
 };
 
 // Fetch calendar events from Google
@@ -174,7 +211,7 @@ export const fetchGoogleCalendarEvents = async (
   timeMin: Date,
   timeMax: Date
 ): Promise<GoogleCalendarEvent[]> => {
-  const token = getGoogleToken();
+  const token = await getGoogleTokenAsync();
   if (!token) throw new Error('Not connected to Google');
 
   const params = new URLSearchParams({

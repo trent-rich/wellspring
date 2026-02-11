@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
 import type { User } from '../types';
+import { storeRefreshToken, clearRefreshToken, startBackgroundRefresh } from '../lib/tokenRefresh';
 
 interface AuthState {
   user: User | null;
@@ -47,6 +48,15 @@ export const useAuthStore = create<AuthState>()(
                 expiresAt: Date.now() + expiresInSec * 1000,
               }));
             }
+            // Capture refresh token for silent re-auth (persists across sessions, encrypted)
+            const initRefreshToken = (session as unknown as Record<string, unknown>).provider_refresh_token;
+            if (initRefreshToken) {
+              console.log('[Auth] initialize: provider_refresh_token found, encrypting and storing...');
+              await storeRefreshToken(initRefreshToken as string, session.user.id);
+            }
+
+            // Start background token refresh timer
+            startBackgroundRefresh();
 
             // Fetch user profile
             const { data: profile, error: profileError } = await supabase
@@ -113,6 +123,10 @@ export const useAuthStore = create<AuthState>()(
           supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_OUT') {
               set({ user: null, session: null });
+              // Clear Google tokens on sign out
+              localStorage.removeItem('google_access_token');
+              localStorage.removeItem('gmail_tokens');
+              clearRefreshToken();
             } else if (session && event === 'SIGNED_IN') {
               // Fetch user profile on sign in
               const { data: profile } = await supabase
@@ -135,6 +149,16 @@ export const useAuthStore = create<AuthState>()(
               } else {
                 console.log('[Auth] No provider_token on SIGNED_IN — user may have signed in with email/password');
               }
+
+              // Capture refresh token for silent re-auth (Google only sends this with access_type=offline + prompt=consent)
+              const signInRefreshToken = (session as unknown as Record<string, unknown>).provider_refresh_token;
+              if (signInRefreshToken) {
+                await storeRefreshToken(signInRefreshToken as string, session.user.id);
+                console.log('[Auth] Google refresh token encrypted and stored for silent renewal');
+              }
+
+              // Start background token refresh timer
+              startBackgroundRefresh();
 
               set({
                 user: profile,

@@ -171,21 +171,6 @@ export default function TaskDetail({ task, onClose, onExecuteGeode }: TaskDetail
                       <ArrowUpRight className="w-4 h-4 inline mr-2" />
                       Escalate
                     </button>
-                    {onExecuteGeode && (
-                      <>
-                        <hr className="my-1" />
-                        <button
-                          onClick={() => {
-                            setShowActions(false);
-                            onExecuteGeode(task);
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 text-green-600"
-                        >
-                          <Play className="w-4 h-4 inline mr-2" />
-                          Execute GEODE Workflow
-                        </button>
-                      </>
-                    )}
                     <hr className="my-1" />
                     <button
                       onClick={handleDelete}
@@ -396,6 +381,15 @@ export default function TaskDetail({ task, onClose, onExecuteGeode }: TaskDetail
         {/* Footer actions */}
         <div className="sticky bottom-0 bg-white border-t border-gray-200 p-3 sm:p-4 safe-area-inset-bottom">
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            {onExecuteGeode && (
+              <button
+                onClick={() => onExecuteGeode(task)}
+                className="btn flex-1 bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                GEODE Workflow
+              </button>
+            )}
             {task.status !== 'completed' && (
               <button onClick={handleComplete} className="btn btn-primary flex-1">
                 <CheckCircle2 className="w-4 h-4 mr-2" />

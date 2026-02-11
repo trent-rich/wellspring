@@ -18,7 +18,8 @@ import {
 } from './gmailService';
 import type { GeodeSuggestedAction, GeodeConfirmationTask } from '../types/geodeEmailEvents';
 import { GEODE_STATES, GEODE_CHAPTER_TYPES } from '../types/geode';
-import { getGoogleToken } from './googleCalendar';
+import { getGoogleTokenAsync } from './googleCalendar';
+import { generateAndUploadContract, type GeneratedContract } from './contractGenerator';
 
 // ============================================
 // GOOGLE DRIVE - Contract File Lookup
@@ -38,7 +39,7 @@ async function findContractInDrive(
   authorName: string,
   chapterTitle: string
 ): Promise<{ filename: string; mimeType: string; content: string } | null> {
-  const token = getGoogleToken();
+  const token = await getGoogleTokenAsync();
   if (!token) {
     console.log('[ContractDrive] No Google token available');
     return null;
@@ -327,10 +328,19 @@ Director of Strategic Initiatives | Project InnerSpace`;
 // ACTION EXECUTORS
 // ============================================
 
+// Store the last generated contract so the outreach email step can attach it
+let lastGeneratedContract: GeneratedContract | null = null;
+
 /**
  * Execute: generate_outreach_contract
- * AI generates/edits the contributor agreement document in Google Drive
- * This prepares the contract to send to a PROSPECTIVE author
+ * Generates an Independent Contractor Agreement DOCX in the browser,
+ * uploads to Google Drive, and stores it for the next email step.
+ *
+ * Timeline dates are calculated by working backwards from the DOE deadline
+ * for the state, using buffer logic from email-ghostwriter/LEARNED_CHANGES.md:
+ * - Tight timelines (≤8 weeks): compressed 37-day schedule
+ * - Medium timelines (>8 weeks): standard 42-day schedule
+ * - Always leaves 2-3 week buffer before DOE deadline
  */
 async function executeGenerateOutreachContract(
   action: GeodeSuggestedAction,
@@ -348,37 +358,67 @@ async function executeGenerateOutreachContract(
   }
 
   const authorName = task.authorName || 'Author TBD';
-
-  // TODO: Integrate with Google Drive API to:
-  // 1. Copy contract template
-  // 2. Fill in author name, chapter, state details
-  // 3. Save to appropriate folder
-  // For now, return success with instructions for manual follow-up
+  const authorEmail = task.authorEmail || 'author@tbd.com';
 
   console.log('[ActionExecutor] Generating outreach contract for:', {
     authorName,
+    authorEmail,
     state: stateInfo.label,
     chapter: chapterInfo.label,
   });
 
-  // In the future, this will call Google Drive API via Ralph
-  // For now, provide helpful guidance
+  // Generate the contract DOCX and upload to Google Drive
+  const contract = await generateAndUploadContract({
+    contractorName: authorName,
+    contractorEmail: authorEmail,
+    state: task.state!,
+    chapterType: task.chapterType!,
+    chapterName: chapterInfo.label,
+    chapterNum: chapterInfo.chapterNum,
+  });
+
+  if (!contract) {
+    return {
+      actionId: action.id,
+      success: false,
+      message: `Failed to generate contract for ${authorName}. Check console for details.`,
+    };
+  }
+
+  // Store for the email step to pick up
+  lastGeneratedContract = contract;
+
+  const driveInfo = contract.driveWebViewLink
+    ? ` Uploaded to Google Drive: ${contract.driveWebViewLink}`
+    : ' (Drive upload failed — will attach directly to email)';
+
   return {
     actionId: action.id,
     success: true,
-    message: `Contract document preparation initiated for ${authorName} (${stateInfo.abbreviation} Ch ${chapterInfo.chapterNum}: ${chapterInfo.label}). AI will generate contract in Google Drive.`,
+    message: `Contract generated: ${contract.filename} (${contract.timeline.timelineType} timeline, ${contract.timeline.bufferDays} days buffer before DOE deadline).${driveInfo}`,
     artifacts: [
       {
         type: 'log_entry',
         details: {
           action: 'outreach_contract_generation',
           authorName,
+          authorEmail,
           state: stateInfo.value,
           stateAbbrev: stateInfo.abbreviation,
           chapter: chapterInfo.value,
           chapterNum: chapterInfo.chapterNum,
           chapterTitle: chapterInfo.label,
-          templateType: action.params.templateType || 'contributor_agreement',
+          filename: contract.filename,
+          driveFileId: contract.driveFileId,
+          driveWebViewLink: contract.driveWebViewLink,
+          timelineType: contract.timeline.timelineType,
+          expertQDate: contract.timeline.expertQDate,
+          firstDraftDate: contract.timeline.firstDraftDate,
+          reviewReturnDate: contract.timeline.reviewReturnDate,
+          grammarProofDate: contract.timeline.grammarProofDate,
+          finalApprovalDate: contract.timeline.finalApprovalDate,
+          doeDeadline: contract.timeline.doeDeadline,
+          bufferDays: contract.timeline.bufferDays,
         },
       },
     ],
@@ -437,19 +477,33 @@ async function executeSendOutreachEmail(
   let attachment: { filename: string; mimeType: string; content: string } | undefined;
   let attachmentSource = '';
 
-  // Search for contract in local folder
-  // Search Supabase Storage for contract file
-  console.log('[ActionExecutor] Searching for outreach contract in Google Drive...');
-  const storageResult = await findContractInDrive(
-    stateInfo.abbreviation,
-    authorName,
-    chapterInfo.label
-  );
+  // PRIORITY 1: Use the contract generated in the previous step (generate_outreach_contract)
+  if (lastGeneratedContract) {
+    console.log('[ActionExecutor] Using freshly generated contract:', lastGeneratedContract.filename);
+    attachment = {
+      filename: lastGeneratedContract.filename,
+      mimeType: lastGeneratedContract.mimeType,
+      content: lastGeneratedContract.base64,
+    };
+    attachmentSource = 'generated';
+    // Clear after use
+    lastGeneratedContract = null;
+  }
 
-  if (storageResult) {
-    attachment = storageResult;
-    attachmentSource = 'Google Drive';
-    console.log('[ActionExecutor] Found contract in storage:', storageResult.filename);
+  // PRIORITY 2: Search Google Drive for existing contract
+  if (!attachment) {
+    console.log('[ActionExecutor] Searching for outreach contract in Google Drive...');
+    const storageResult = await findContractInDrive(
+      stateInfo.abbreviation,
+      authorName,
+      chapterInfo.label
+    );
+
+    if (storageResult) {
+      attachment = storageResult;
+      attachmentSource = 'Google Drive';
+      console.log('[ActionExecutor] Found contract in Drive:', storageResult.filename);
+    }
   }
 
   // Create draft with or without attachment

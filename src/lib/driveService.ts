@@ -5,7 +5,7 @@
  * Uses the same OAuth token as Gmail/Calendar.
  */
 
-import { getGoogleToken, isGoogleConnected } from './googleCalendar';
+import { getGoogleTokenAsync, isGoogleConnected } from './googleCalendar';
 
 const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 const DRIVE_UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3';
@@ -43,7 +43,7 @@ async function driveFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = getGoogleToken();
+  const token = await getGoogleTokenAsync();
   if (!token) {
     throw new Error('Not connected to Google. Please connect in Settings.');
   }
@@ -117,7 +117,7 @@ export async function uploadFile(
   mimeType: string,
   folderId?: string
 ): Promise<DriveUploadResult> {
-  const token = getGoogleToken();
+  const token = await getGoogleTokenAsync();
   if (!token) {
     return {
       success: false,
@@ -202,7 +202,7 @@ export async function createFolder(
   name: string,
   parentFolderId?: string
 ): Promise<DriveUploadResult> {
-  const token = getGoogleToken();
+  const token = await getGoogleTokenAsync();
   if (!token) {
     return {
       success: false,
@@ -283,7 +283,7 @@ export async function searchFiles(
  * Get a shareable link for a file (sets to "anyone with link can view")
  */
 export async function getShareableLink(fileId: string): Promise<string | null> {
-  const token = getGoogleToken();
+  const token = await getGoogleTokenAsync();
   if (!token) {
     return null;
   }
