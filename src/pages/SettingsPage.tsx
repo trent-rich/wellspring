@@ -18,8 +18,6 @@ import { useCalendarStore } from '../store/calendarStore';
 import type { InterruptPolicy } from '../types';
 import { cn } from '../lib/utils';
 import {
-  initGoogleAuth,
-  signInWithGoogle,
   isGoogleConnected,
   disconnectGoogle,
   fetchGoogleCalendarEvents,
@@ -50,7 +48,7 @@ import {
 } from '../lib/aiService';
 
 export default function SettingsPage() {
-  const { user, updateProfile } = useAuthStore();
+  const { user, updateProfile, signInWithGoogle: ssoSignIn } = useAuthStore();
   const { policy, updatePolicy } = useUserStateStore();
   const { syncEvent } = useCalendarStore();
 
@@ -403,10 +401,9 @@ export default function SettingsPage() {
                   onClick={async () => {
                     try {
                       setSyncStatus(null);
-                      await initGoogleAuth();
-                      await signInWithGoogle(user?.email || undefined);
-                      setGoogleConnected(true);
-                      setSyncStatus('Connected! Click "Sync Calendar" to import events.');
+                      setSyncStatus('Redirecting to Google sign-in...');
+                      await ssoSignIn();
+                      // Browser will redirect — token is captured on return via onAuthStateChange
                     } catch (error) {
                       console.error('[Settings] Google connect error:', error);
                       setSyncStatus(`Error: ${error instanceof Error ? error.message : 'Failed to connect'}`);

@@ -37,6 +37,17 @@ export const useAuthStore = create<AuthState>()(
           if (sessionError) throw sessionError;
 
           if (session) {
+            // If provider_token is available (right after OAuth redirect), store it
+            if (session.provider_token) {
+              console.log('[Auth] initialize: provider_token found in session, storing...');
+              localStorage.setItem('google_access_token', session.provider_token);
+              const expiresInSec = session.expires_in || 3600;
+              localStorage.setItem('gmail_tokens', JSON.stringify({
+                accessToken: session.provider_token,
+                expiresAt: Date.now() + expiresInSec * 1000,
+              }));
+            }
+
             // Fetch user profile
             const { data: profile, error: profileError } = await supabase
               .from('users')
@@ -110,15 +121,19 @@ export const useAuthStore = create<AuthState>()(
                 .eq('id', session.user.id)
                 .single();
 
-              // If signed in via Google OAuth, store the provider token for Gmail/Calendar
+              // If signed in via Google OAuth, store the provider token for Gmail/Calendar/Drive
+              console.log('[Auth] SIGNED_IN event — provider_token present?', !!session.provider_token);
               if (session.provider_token) {
                 localStorage.setItem('google_access_token', session.provider_token);
+                const expiresInSec = session.expires_in || 3600;
                 const gmailTokens = {
                   accessToken: session.provider_token,
-                  expiresAt: Date.now() + (session.expires_in || 3600) * 1000,
+                  expiresAt: Date.now() + expiresInSec * 1000,
                 };
                 localStorage.setItem('gmail_tokens', JSON.stringify(gmailTokens));
-                console.log('[Auth] Google provider token stored for Gmail/Calendar');
+                console.log('[Auth] Google provider token stored for Gmail/Calendar/Drive, expires in', expiresInSec, 's');
+              } else {
+                console.log('[Auth] No provider_token on SIGNED_IN — user may have signed in with email/password');
               }
 
               set({
@@ -193,12 +208,13 @@ export const useAuthStore = create<AuthState>()(
           const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-              redirectTo: window.location.origin,
+              redirectTo: window.location.origin + '/dashboard',
               scopes: [
                 'https://www.googleapis.com/auth/calendar.readonly',
                 'https://www.googleapis.com/auth/gmail.readonly',
                 'https://www.googleapis.com/auth/gmail.send',
                 'https://www.googleapis.com/auth/gmail.compose',
+                'https://www.googleapis.com/auth/drive.file',
               ].join(' '),
               queryParams: {
                 access_type: 'offline',

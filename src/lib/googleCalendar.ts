@@ -139,13 +139,25 @@ export const signInWithGoogle = (loginHint?: string): Promise<string> => {
   });
 };
 
-// Get stored token
+// Get stored token — checks both in-memory and localStorage (SSO or standalone flow)
 export const getGoogleToken = (): string | null => {
   if (accessToken) return accessToken;
+
+  // Check gmail_tokens first (set by SSO flow with expiry info)
+  const gmailTokensRaw = localStorage.getItem('gmail_tokens');
+  if (gmailTokensRaw) {
+    try {
+      const gmailTokens = JSON.parse(gmailTokensRaw);
+      if (gmailTokens.accessToken && gmailTokens.expiresAt > Date.now()) {
+        return gmailTokens.accessToken;
+      }
+    } catch { /* ignore parse errors */ }
+  }
+
   return localStorage.getItem('google_access_token');
 };
 
-// Check if connected
+// Check if connected (has a valid, non-expired token)
 export const isGoogleConnected = (): boolean => {
   return !!getGoogleToken();
 };

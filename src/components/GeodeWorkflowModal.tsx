@@ -101,7 +101,7 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
     // Pre-flight check: verify Gmail is connected before starting
     const preflight = canExecuteActions();
     if (!preflight.ready) {
-      setError(`Cannot execute workflow: ${preflight.issues.join(', ')}. Go to Settings → Integrations → Connect Google to grant Gmail access.`);
+      setError(`Cannot execute workflow: ${preflight.issues.join(', ')}. Your Google session may have expired. Go to Settings → Integrations → Connect Google to re-authenticate.`);
       return;
     }
 
