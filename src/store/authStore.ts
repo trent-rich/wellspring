@@ -214,7 +214,7 @@ export const useAuthStore = create<AuthState>()(
                 'https://www.googleapis.com/auth/gmail.readonly',
                 'https://www.googleapis.com/auth/gmail.send',
                 'https://www.googleapis.com/auth/gmail.compose',
-                'https://www.googleapis.com/auth/drive.file',
+                'https://www.googleapis.com/auth/drive.readonly',
               ].join(' '),
               queryParams: {
                 access_type: 'offline',

@@ -18,50 +18,81 @@ import {
 } from './gmailService';
 import type { GeodeSuggestedAction, GeodeConfirmationTask } from '../types/geodeEmailEvents';
 import { GEODE_STATES, GEODE_CHAPTER_TYPES } from '../types/geode';
-import { supabase } from './supabase';
+import { getGoogleToken } from './googleCalendar';
 
 // ============================================
-// SUPABASE STORAGE - Contract File Lookup
+// GOOGLE DRIVE - Contract File Lookup
 // ============================================
+
+// Contracts folder in Google Drive
+const CONTRACTS_FOLDER_ID = '1su4hSG2DDjJ-t2Oi7q_39HeaYQD8IIfj';
+const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 
 /**
- * Search Supabase Storage for a contract file matching state/author
- * Storage structure: contracts/{STATE_ABBREV}/InnerSpace_Agreement_{STATE}_{Chapter}_{Initials}.pdf
+ * Search Google Drive contracts folder for a file matching state/author
+ * Naming convention: InnerSpace_Agreement_{STATE}_{Chapter}_{Initials}.pdf
  * Returns base64-encoded file content if found
  */
-async function findContractInStorage(
+async function findContractInDrive(
   stateAbbrev: string,
   authorName: string,
   chapterTitle: string
 ): Promise<{ filename: string; mimeType: string; content: string } | null> {
-  try {
-    // List files in the state folder
-    const { data: files, error } = await supabase.storage
-      .from('contracts')
-      .list(stateAbbrev, { limit: 100 });
+  const token = getGoogleToken();
+  if (!token) {
+    console.log('[ContractDrive] No Google token available');
+    return null;
+  }
 
-    if (error || !files || files.length === 0) {
-      console.log('[ContractStorage] No files found in', stateAbbrev, error?.message);
+  try {
+    // Search for files in the contracts folder
+    // Use a broad query — we'll filter client-side for best match
+    const query = `'${CONTRACTS_FOLDER_ID}' in parents and trashed = false`;
+    const fields = 'files(id,name,mimeType,size)';
+
+    const listUrl = `${DRIVE_API_BASE}/files?q=${encodeURIComponent(query)}&fields=${encodeURIComponent(fields)}&pageSize=100`;
+    console.log('[ContractDrive] Listing files in contracts folder...');
+
+    const listResponse = await fetch(listUrl, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!listResponse.ok) {
+      const err = await listResponse.json().catch(() => ({}));
+      console.error('[ContractDrive] List failed:', listResponse.status, err);
       return null;
     }
 
-    // Get author initials for matching
+    const listData = await listResponse.json();
+    const files: Array<{ id: string; name: string; mimeType: string; size?: string }> = listData.files || [];
+
+    if (files.length === 0) {
+      console.log('[ContractDrive] No files in contracts folder');
+      return null;
+    }
+
+    console.log('[ContractDrive] Found', files.length, 'files:', files.map(f => f.name));
+
+    // Build matching criteria
     const initials = authorName
       .split(/\s+/)
       .map(word => word.charAt(0).toUpperCase())
       .join('');
-
-    // Look for matching PDF first, then Word doc
     const normalizedChapter = chapterTitle.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    const lastName = authorName.split(/\s+/).pop()?.toLowerCase() || '';
 
     const matchFile = (filename: string): boolean => {
       const lower = filename.toLowerCase();
-      // Match by initials
+      const abbrevLower = stateAbbrev.toLowerCase();
+
+      // Must match state abbreviation
+      if (!lower.includes(abbrevLower) && !lower.includes(`_${abbrevLower}_`) && !lower.includes(`_${abbrevLower}.`)) {
+        return false;
+      }
+
+      // Then match by initials, chapter name, or author last name
       if (lower.includes(initials.toLowerCase())) return true;
-      // Match by chapter name
       if (lower.includes(normalizedChapter)) return true;
-      // Match by author last name
-      const lastName = authorName.split(/\s+/).pop()?.toLowerCase() || '';
       if (lastName.length > 2 && lower.includes(lastName)) return true;
       return false;
     };
@@ -75,44 +106,68 @@ async function findContractInStorage(
     const matched = matchedPdf || matchedDoc;
 
     if (!matched) {
-      console.log('[ContractStorage] No matching file for', authorName, 'in', stateAbbrev);
-      console.log('[ContractStorage] Available files:', files.map(f => f.name));
+      // Fallback: match state abbreviation only (broader match)
+      const stateMatch = pdfs.find(f => f.name.toLowerCase().includes(stateAbbrev.toLowerCase()))
+        || docs.find(f => f.name.toLowerCase().includes(stateAbbrev.toLowerCase()));
+
+      if (!stateMatch) {
+        console.log('[ContractDrive] No matching file for', authorName, stateAbbrev);
+        return null;
+      }
+
+      console.log('[ContractDrive] Using state-level match:', stateMatch.name);
+      return await downloadDriveFile(stateMatch, token);
+    }
+
+    console.log('[ContractDrive] Best match:', matched.name);
+    return await downloadDriveFile(matched, token);
+  } catch (error) {
+    console.error('[ContractDrive] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Download a file from Google Drive and return as base64
+ */
+async function downloadDriveFile(
+  file: { id: string; name: string; mimeType: string },
+  token: string
+): Promise<{ filename: string; mimeType: string; content: string } | null> {
+  try {
+    const downloadUrl = `${DRIVE_API_BASE}/files/${file.id}?alt=media`;
+    console.log('[ContractDrive] Downloading:', file.name);
+
+    const downloadResponse = await fetch(downloadUrl, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!downloadResponse.ok) {
+      console.error('[ContractDrive] Download failed:', downloadResponse.status);
       return null;
     }
 
-    // Download the file
-    const filePath = `${stateAbbrev}/${matched.name}`;
-    console.log('[ContractStorage] Downloading:', filePath);
-
-    const { data: blob, error: downloadError } = await supabase.storage
-      .from('contracts')
-      .download(filePath);
-
-    if (downloadError || !blob) {
-      console.error('[ContractStorage] Download failed:', downloadError?.message);
-      return null;
-    }
-
-    // Convert to base64
+    const blob = await downloadResponse.blob();
     const arrayBuffer = await blob.arrayBuffer();
     const base64 = btoa(
       new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
     );
 
-    const isPdf = matched.name.endsWith('.pdf');
+    // Determine mime type
+    const isPdf = file.name.endsWith('.pdf');
     const mimeType = isPdf
       ? 'application/pdf'
-      : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      : file.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-    console.log('[ContractStorage] Loaded:', matched.name, `(${Math.round(base64.length / 1024)}KB base64)`);
+    console.log('[ContractDrive] Loaded:', file.name, `(${Math.round(base64.length / 1024)}KB base64)`);
 
     return {
-      filename: matched.name,
+      filename: file.name,
       mimeType,
       content: base64,
     };
   } catch (error) {
-    console.error('[ContractStorage] Error:', error);
+    console.error('[ContractDrive] Download error:', error);
     return null;
   }
 }
@@ -384,8 +439,8 @@ async function executeSendOutreachEmail(
 
   // Search for contract in local folder
   // Search Supabase Storage for contract file
-  console.log('[ActionExecutor] Searching for outreach contract in Supabase Storage...');
-  const storageResult = await findContractInStorage(
+  console.log('[ActionExecutor] Searching for outreach contract in Google Drive...');
+  const storageResult = await findContractInDrive(
     stateInfo.abbreviation,
     authorName,
     chapterInfo.label
@@ -393,7 +448,7 @@ async function executeSendOutreachEmail(
 
   if (storageResult) {
     attachment = storageResult;
-    attachmentSource = 'Supabase Storage';
+    attachmentSource = 'Google Drive';
     console.log('[ActionExecutor] Found contract in storage:', storageResult.filename);
   }
 
@@ -551,8 +606,8 @@ async function executeSendContract(
   let attachmentSource = '';
 
   // PRIORITY 1: Search Supabase Storage for contract file
-  console.log('[ActionExecutor] Searching for contract in Supabase Storage...');
-  const storageContract = await findContractInStorage(
+  console.log('[ActionExecutor] Searching for contract in Google Drive...');
+  const storageContract = await findContractInDrive(
     stateInfo.abbreviation,
     authorName,
     chapterInfo.label
@@ -560,7 +615,7 @@ async function executeSendContract(
 
   if (storageContract) {
     attachment = storageContract;
-    attachmentSource = 'Supabase Storage';
+    attachmentSource = 'Google Drive';
     console.log('[ActionExecutor] Found contract in storage:', storageContract.filename);
   }
 
