@@ -25,13 +25,8 @@ export const supabase = createClient(
   }
 );
 
-// Admin client (service role) — only used for admin operations like inviting users
-const supabaseServiceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-export const supabaseAdmin = supabaseServiceRoleKey
-  ? createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseServiceRoleKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
-  : null;
+// Admin operations (user invites) now use Edge Function (admin-invite)
+// Service role key is stored server-side in Supabase secrets
 
 // Helper to get current user ID
 export const getCurrentUserId = async (): Promise<string | null> => {

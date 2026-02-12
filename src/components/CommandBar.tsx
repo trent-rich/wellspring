@@ -6,6 +6,7 @@ import { useUserStateStore } from '../store/userStateStore';
 import { useSequencingStore } from '../store/sequencingStore';
 import type { VoiceCommand, TaskWithRelations } from '../types';
 import { cn, parseTaskId } from '../lib/utils';
+import { aiChat } from '../lib/edgeFunctions';
 
 // Web Speech API types
 interface SpeechRecognitionEvent extends Event {
@@ -55,10 +56,6 @@ interface CommandBarProps {
   onGeodeWorkflow?: (task: TaskWithRelations) => void;
 }
 
-function getAnthropicApiKey(): string | undefined {
-  return localStorage.getItem('sequencing_anthropic_key') || import.meta.env.VITE_ANTHROPIC_API_KEY;
-}
-
 // Build a context summary for Claude about the current app state
 function buildAppContext(): string {
   const taskStore = useTaskStore.getState();
@@ -93,34 +90,10 @@ Respond concisely (1-3 sentences). If the user's question can be answered with a
 }
 
 async function askClaude(question: string): Promise<string | null> {
-  const apiKey = getAnthropicApiKey();
-  if (!apiKey) return null;
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        system: buildAppContext(),
-        messages: [{ role: 'user', content: question }],
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return data.content?.[0]?.text || null;
-    }
-  } catch (err) {
-    console.error('[CommandBar] Claude API error:', err);
-  }
-  return null;
+  return aiChat(question, {
+    system: buildAppContext(),
+    max_tokens: 300,
+  });
 }
 
 export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
@@ -330,7 +303,7 @@ export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
           if (aiResponse) {
             setFeedback({ type: 'ai', message: aiResponse });
           } else {
-            setFeedback({ type: 'error', message: 'No API key configured. Add one in Sequencing > Settings.' });
+            setFeedback({ type: 'error', message: 'AI service unavailable. Check Edge Function configuration.' });
           }
           break;
         }

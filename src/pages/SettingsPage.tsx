@@ -11,6 +11,7 @@ import {
   Bot,
   Play,
   Trash2,
+  Zap,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useUserStateStore } from '../store/userStateStore';
@@ -46,6 +47,10 @@ import {
   type AIAction,
   type ActionProviderConfig,
 } from '../lib/aiService';
+import {
+  checkAIProviderStatus,
+  type AIProviderStatus,
+} from '../lib/edgeFunctions';
 
 export default function SettingsPage() {
   const { user, updateProfile, signInWithGoogle: ssoSignIn } = useAuthStore();
@@ -76,6 +81,10 @@ export default function SettingsPage() {
   const [actionProviders, setActionProvidersState] = useState<ActionProviderConfig>(getActionProviders());
   const availableProviders = getAvailableProviders();
   const availableActions = getAvailableActions();
+
+  // AI Provider health check
+  const [aiProviderStatuses, setAIProviderStatuses] = useState<AIProviderStatus[]>([]);
+  const [isCheckingAI, setIsCheckingAI] = useState(false);
 
   // Profile form state
   const [fullName, setFullName] = useState(user?.full_name || '');
@@ -782,6 +791,75 @@ export default function SettingsPage() {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* AI Providers Status */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-indigo-100">
+                  <Zap className="w-5 h-5 text-indigo-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">AI Providers</h2>
+              </div>
+              <button
+                onClick={async () => {
+                  setIsCheckingAI(true);
+                  try {
+                    const statuses = await checkAIProviderStatus();
+                    setAIProviderStatuses(statuses);
+                  } finally {
+                    setIsCheckingAI(false);
+                  }
+                }}
+                disabled={isCheckingAI}
+                className="btn btn-secondary text-sm"
+              >
+                {isCheckingAI ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Test All'
+                )}
+              </button>
+            </div>
+            <p className="text-gray-500 mb-4">
+              AI providers power the Command Bar, draft generation, task extraction, and voice responses. Keys are stored securely server-side.
+            </p>
+
+            <div className="space-y-2">
+              {[
+                { id: 'claude', name: 'Anthropic Claude', desc: 'Command Bar, drafts, task extraction' },
+                { id: 'gpt4', name: 'OpenAI GPT-4', desc: 'Task prioritization' },
+                { id: 'gemini', name: 'Google Gemini', desc: 'Voice responses' },
+              ].map((provider) => {
+                const status = aiProviderStatuses.find(s => s.provider === provider.id);
+                return (
+                  <div
+                    key={provider.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">{provider.name}</p>
+                      <p className="text-xs text-gray-500">{provider.desc}</p>
+                    </div>
+                    {status ? (
+                      status.connected ? (
+                        <span className="flex items-center gap-1 text-sm text-green-600">
+                          <Check className="w-4 h-4" />
+                          Connected
+                        </span>
+                      ) : (
+                        <span className="text-sm text-red-500" title={status.error}>
+                          Not Available
+                        </span>
+                      )
+                    ) : (
+                      <span className="text-xs text-gray-400">Not tested</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Clear Stale Data */}

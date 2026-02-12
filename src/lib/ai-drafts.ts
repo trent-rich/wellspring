@@ -1,12 +1,8 @@
 // AI Draft Generation for CERA Week Invitation Sequencing
-// Uses direct Anthropic API for draft generation and response classification
+// Uses Supabase Edge Function (ai-gateway) for draft generation and response classification
 
 import type { DraftRequest, ResponseClassification } from '../types/sequencing';
-
-function getAnthropicApiKey(): string | undefined {
-  // Check localStorage first (user-specific key), then env variable
-  return localStorage.getItem('sequencing_anthropic_key') || import.meta.env.VITE_ANTHROPIC_API_KEY;
-}
+import { aiChat } from './edgeFunctions';
 
 const PANEL_CONTEXT: Record<string, string> = {
   '1': 'Panel 1: State Policy Scaffolding — 13-state Geothermal Accelerator, NASEO co-convening, state energy directors.',
@@ -67,40 +63,22 @@ ${leverageNameInfo}
 
 The event is a closed-door series at CERA Week 2026 (Houston, March 23-27) on geothermal-powered AI infrastructure. NASEO is co-convening. The agenda connects state geothermal policy to hyperscaler demand, community siting standards, and capital formation.`;
 
-  // Try direct Anthropic API
-  const apiKey = getAnthropicApiKey();
-  if (apiKey) {
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
-          system: SYSTEM_PROMPT,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      });
+  // Use AI Gateway Edge Function
+  try {
+    const body = await aiChat(prompt, {
+      system: SYSTEM_PROMPT,
+      max_tokens: 1024,
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        const body =
-          data.content?.[0]?.text || 'Draft generation failed — please write manually.';
+    if (body) {
+      const subject = request.isFollowUp
+        ? `Re: CERA Week 2026 — ${request.organization}`
+        : `CERA Week 2026 — Invitation: ${request.inviteeName}`;
 
-        const subject = request.isFollowUp
-          ? `Re: CERA Week 2026 — ${request.organization}`
-          : `CERA Week 2026 — Invitation: ${request.inviteeName}`;
-
-        return { subject, body };
-      }
-    } catch (err) {
-      console.error('[ai-drafts] Anthropic API error:', err);
+      return { subject, body };
     }
+  } catch (err) {
+    console.error('[ai-drafts] AI Gateway error:', err);
   }
 
   // Fallback: template-based generation
@@ -136,43 +114,24 @@ export async function classifyEmailResponse(
   emailBody: string,
   inviteeName: string
 ): Promise<{ classification: ResponseClassification; confidence: number }> {
-  const classifyKey = getAnthropicApiKey();
-  if (classifyKey) {
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': classifyKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 256,
-          system:
-            'You classify email responses to event invitations. Respond with ONLY a JSON object: {"classification": "confirmed"|"declined"|"more_info"|"meeting_requested"|"unclear", "confidence": 0.0-1.0}',
-          messages: [
-            {
-              role: 'user',
-              content: `Classify this response from ${inviteeName} to a CERA Week 2026 invitation:\n\n${emailBody}`,
-            },
-          ],
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.content?.[0]?.text || '';
-        const parsed = JSON.parse(text);
-        return {
-          classification: parsed.classification || 'unclear',
-          confidence: parsed.confidence || 0.5,
-        };
+  try {
+    const text = await aiChat(
+      `Classify this response from ${inviteeName} to a CERA Week 2026 invitation:\n\n${emailBody}`,
+      {
+        system: 'You classify email responses to event invitations. Respond with ONLY a JSON object: {"classification": "confirmed"|"declined"|"more_info"|"meeting_requested"|"unclear", "confidence": 0.0-1.0}',
+        max_tokens: 256,
       }
-    } catch (err) {
-      console.error('[ai-drafts] Classification error:', err);
+    );
+
+    if (text) {
+      const parsed = JSON.parse(text);
+      return {
+        classification: parsed.classification || 'unclear',
+        confidence: parsed.confidence || 0.5,
+      };
     }
+  } catch (err) {
+    console.error('[ai-drafts] Classification error:', err);
   }
 
   // Fallback: keyword-based classification

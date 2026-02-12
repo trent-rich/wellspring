@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { X, Play, Loader2, Users, FileSignature } from 'lucide-react';
+import { X, Play, Users, FileSignature } from 'lucide-react';
 import { GEODE_STATES, GEODE_CHAPTER_TYPES } from '../types/geode';
 import type { GeodeState, GeodeContentSection } from '../types/geode';
 import type { TaskWithRelations } from '../types';
@@ -11,6 +11,7 @@ import {
 } from '../types/geodeEmailEvents';
 import { useGeodeEmailStore } from '../store/geodeEmailStore';
 import { useTaskStore } from '../store/taskStore';
+import { useExecutionStore } from '../store/executionStore';
 import { canExecuteActions } from '../lib/geodeActionExecutor';
 import { cn } from '../lib/utils';
 
@@ -47,19 +48,18 @@ const WORKFLOW_INFO: Record<GeodeWorkflowType, {
 };
 
 export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeWorkflowModalProps) {
-  const [step, setStep] = useState<'workflow' | 'state' | 'chapter' | 'author' | 'executing' | 'done'>('workflow');
+  const [step, setStep] = useState<'workflow' | 'state' | 'chapter' | 'author'>('workflow');
   const [selectedWorkflow, setSelectedWorkflow] = useState<GeodeWorkflowType | null>(null);
   const [selectedState, setSelectedState] = useState<GeodeState | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<GeodeContentSection | null>(null);
   const [authorName, setAuthorName] = useState('');
   const [authorEmail, setAuthorEmail] = useState('');
   const [paymentAmount, setPaymentAmount] = useState<number>(5000);
-  const [isExecuting, setIsExecuting] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { addEmailEvent, confirmTask } = useGeodeEmailStore();
   const { completeTask } = useTaskStore();
+  const { addJob, updateJob } = useExecutionStore();
 
   // Infer the workflow type from task context
   const inferredWorkflow = useMemo(() => {
@@ -106,105 +106,119 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
       return;
     }
 
-    setStep('executing');
-    setIsExecuting(true);
     setError(null);
 
+    // Capture values before closing modal
+    const execState = selectedState;
+    const execChapter = selectedChapter;
+    const execWorkflow = selectedWorkflow;
+    const execAuthorName = authorName;
+    const execAuthorEmail = authorEmail;
+    const execPaymentAmount = paymentAmount;
+    const stateLabel = GEODE_STATES.find(s => s.value === execState)?.abbreviation || execState;
+    const chapterLabel = GEODE_CHAPTER_TYPES.find(c => c.value === execChapter)?.label || execChapter;
+    const workflowInfo = WORKFLOW_INFO[execWorkflow];
+
+    // Create a background execution job
+    const jobId = `exec_${Date.now()}`;
+    addJob({
+      id: jobId,
+      taskShortId: task.short_id,
+      taskId: task.id,
+      workflowTitle: workflowInfo.title,
+      state: stateLabel,
+      chapter: chapterLabel,
+      authorName: execAuthorName || undefined,
+    });
+
+    // Close the modal immediately — execution continues in background
+    if (onComplete) {
+      onComplete();
+    } else {
+      onClose();
+    }
+
+    // ---- Background execution (fire-and-forget from modal's perspective) ----
     try {
-      // Get the appropriate actions for the selected workflow
-      const actions = selectedWorkflow === 'author_outreach'
+      const actions = execWorkflow === 'author_outreach'
         ? AUTHOR_OUTREACH_ACTIONS
         : AUTHOR_AGREEMENT_ACTIONS;
 
-      // Create a GEODE email event from the task with the collected context
       const eventId = `manual_${Date.now()}`;
-      const eventType = selectedWorkflow === 'author_outreach' ? 'contract_requested' : 'author_agreed';
+      const eventType = execWorkflow === 'author_outreach' ? 'contract_requested' : 'author_agreed';
 
       const event = {
         id: eventId,
         emailId: `task_${task.id}`,
         subject: task.title,
-        fromEmail: authorEmail || 'manual@watershed.app',
-        fromName: authorName || 'Manual Entry',
+        fromEmail: execAuthorEmail || 'manual@watershed.app',
+        fromName: execAuthorName || 'Manual Entry',
         toEmails: ['trent@projectinnerspace.org'],
         ccEmails: [],
         receivedAt: new Date().toISOString(),
         snippet: task.description || '',
         eventType: eventType as 'author_agreed' | 'contract_requested',
         confidence: 1.0,
-        detectedState: selectedState,
-        detectedChapter: selectedChapter,
-        detectedAuthorName: authorName || undefined,
-        detectedAuthorEmail: authorEmail || undefined,
+        detectedState: execState,
+        detectedChapter: execChapter,
+        detectedAuthorName: execAuthorName || undefined,
+        detectedAuthorEmail: execAuthorEmail || undefined,
         extractedDetails: {
-          workflowType: selectedWorkflow,
-          ...(authorName && { authorName }),
-          ...(authorEmail && { authorEmail }),
-          ...(selectedWorkflow === 'author_outreach' && { paymentAmount: String(paymentAmount) }),
+          workflowType: execWorkflow,
+          ...(execAuthorName && { authorName: execAuthorName }),
+          ...(execAuthorEmail && { authorEmail: execAuthorEmail }),
+          ...(execWorkflow === 'author_outreach' && { paymentAmount: String(execPaymentAmount) }),
         },
         suggestedActions: actions,
         status: 'pending' as const,
         createdAt: new Date().toISOString(),
       };
 
-      // Add the event to create a GEODE confirmation task
       addEmailEvent(event);
 
-      // Now confirm it immediately to execute the workflow
       const geodeTaskId = `task_${eventId}`;
       const executionResult = await confirmTask(geodeTaskId, 'task-detail');
 
-      // Check execution result — surface failures to the user
       if (!executionResult) {
-        throw new Error('Workflow execution returned no result. The confirmation task may not have been created correctly.');
+        updateJob(jobId, {
+          status: 'failed',
+          message: 'Workflow execution returned no result.',
+        });
+        return;
       }
 
       const failedActions = executionResult.results.filter(r => !r.success);
-      const stateLabel = GEODE_STATES.find(s => s.value === selectedState)?.abbreviation || selectedState;
-      const chapterLabel = GEODE_CHAPTER_TYPES.find(c => c.value === selectedChapter)?.label || selectedChapter;
-      const workflowInfo = WORKFLOW_INFO[selectedWorkflow];
 
       if (failedActions.length > 0 && failedActions.length === executionResult.results.length) {
-        // All actions failed — show error, don't complete the task
-        const failMessages = failedActions.map(r => `• ${r.message}`).join('\n');
-        throw new Error(`All workflow actions failed:\n${failMessages}`);
+        const failMessages = failedActions.map(r => r.message).join('; ');
+        updateJob(jobId, {
+          status: 'failed',
+          message: `All actions failed: ${failMessages}`,
+        });
+        return;
       }
 
       // At least some actions succeeded — complete the original task
       await completeTask(task.id);
 
       if (failedActions.length > 0) {
-        // Partial success
-        const failMessages = failedActions.map(r => `• ${r.message}`).join('\n');
-        setResult(
-          `Partially executed ${workflowInfo.title} for ${task.short_id}:\n` +
-          `${stateLabel} - ${chapterLabel}` +
-          `${authorName ? `\nAuthor: ${authorName}` : ''}` +
-          `${authorEmail ? `\nEmail: ${authorEmail}` : ''}` +
-          `\n\nSome actions failed:\n${failMessages}` +
-          `\n\n${executionResult.summary}`
-        );
+        const failMessages = failedActions.map(r => r.message).join('; ');
+        updateJob(jobId, {
+          status: 'partial',
+          message: `${executionResult.summary} (Failed: ${failMessages})`,
+        });
       } else {
-        setResult(
-          `Successfully executed ${workflowInfo.title} for ${task.short_id}:\n` +
-          `${stateLabel} - ${chapterLabel}` +
-          `${authorName ? `\nAuthor: ${authorName}` : ''}` +
-          `${authorEmail ? `\nEmail: ${authorEmail}` : ''}` +
-          `\n\n${executionResult.summary}`
-        );
-      }
-
-      setStep('done');
-
-      if (onComplete) {
-        onComplete();
+        updateJob(jobId, {
+          status: 'success',
+          message: executionResult.summary,
+        });
       }
     } catch (err) {
-      console.error('GEODE workflow execution error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to execute GEODE workflow');
-      setStep('author'); // Go back to allow retry
-    } finally {
-      setIsExecuting(false);
+      console.error('GEODE background execution error:', err);
+      updateJob(jobId, {
+        status: 'failed',
+        message: err instanceof Error ? err.message : 'Unknown error',
+      });
     }
   };
 
@@ -243,7 +257,7 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
           {step !== 'workflow' && (
             <div className="flex items-center justify-center gap-2 mb-6">
               {(['state', 'chapter', 'author'] as const).map((s, i) => {
-                const stepOrder = ['workflow', 'state', 'chapter', 'author', 'executing', 'done'];
+                const stepOrder = ['workflow', 'state', 'chapter', 'author'];
                 const currentIndex = stepOrder.indexOf(step);
                 const stepIndex = stepOrder.indexOf(s);
                 const isActive = currentIndex >= stepIndex && currentIndex <= stepIndex + 3;
@@ -479,49 +493,17 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
               <div className="mt-6 flex gap-3">
                 <button
                   onClick={handleExecute}
-                  disabled={isExecuting || (selectedWorkflow === 'author_outreach' && !authorEmail)}
+                  disabled={selectedWorkflow === 'author_outreach' && !authorEmail}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
                 >
-                  {isExecuting ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Play className="w-5 h-5" />
-                  )}
-                  {isExecuting ? 'Executing...' : `Execute ${currentWorkflowInfo?.title || 'Workflow'}`}
+                  <Play className="w-5 h-5" />
+                  Execute {currentWorkflowInfo?.title || 'Workflow'}
                 </button>
               </div>
             </div>
           )}
 
-          {/* Executing */}
-          {step === 'executing' && (
-            <div className="flex flex-col items-center justify-center py-8">
-              <Loader2 className="w-12 h-12 text-watershed-600 animate-spin mb-4" />
-              <p className="text-gray-600">Executing {currentWorkflowInfo?.title || 'GEODE'} workflow...</p>
-              <p className="text-sm text-gray-400 mt-1">
-                {selectedWorkflow === 'author_outreach'
-                  ? 'Generating contract and creating outreach email'
-                  : 'Creating email drafts and updating records'}
-              </p>
-            </div>
-          )}
-
-          {/* Done */}
-          {step === 'done' && result && (
-            <div className="text-center py-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Play className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Workflow Executed</h3>
-              <p className="text-sm text-gray-600 whitespace-pre-line">{result}</p>
-              <button
-                onClick={onClose}
-                className="mt-6 px-6 py-2 bg-watershed-600 text-white rounded-lg hover:bg-watershed-700"
-              >
-                Close
-              </button>
-            </div>
-          )}
+          {/* Note: executing/done steps now handled by background ExecutionToasts */}
         </div>
       </div>
     </div>

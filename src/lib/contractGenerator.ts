@@ -845,14 +845,8 @@ export async function uploadContractToDrive(
   blob: Blob,
   filename: string
 ): Promise<{ fileId: string; webViewLink: string } | null> {
-  const token = await getGoogleTokenAsync();
-  if (!token) {
-    console.error('[ContractGenerator] No Google token available for Drive upload');
-    return null;
-  }
-
-  try {
-    // Use multipart upload to set metadata + content in one request
+  // Helper: attempt a single upload
+  const tryUpload = async (token: string): Promise<Response> => {
     const metadata = {
       name: filename,
       parents: [CONTRACTS_FOLDER_ID],
@@ -866,9 +860,7 @@ export async function uploadContractToDrive(
     );
     form.append('file', blob, filename);
 
-    console.log('[ContractGenerator] Uploading to Drive:', filename);
-
-    const response = await fetch(
+    return fetch(
       `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink`,
       {
         method: 'POST',
@@ -876,10 +868,37 @@ export async function uploadContractToDrive(
         body: form,
       }
     );
+  };
+
+  let token = await getGoogleTokenAsync();
+  if (!token) {
+    console.error('[ContractGenerator] No Google token available for Drive upload');
+    return null;
+  }
+
+  try {
+    console.log('[ContractGenerator] Uploading to Drive:', filename);
+
+    let response = await tryUpload(token);
+
+    // If 401, force a token refresh and retry once
+    if (response.status === 401) {
+      console.warn('[ContractGenerator] Drive upload got 401 — forcing token refresh and retry');
+      try {
+        const { refreshGoogleTokenNow } = await import('./tokenRefresh');
+        const refreshed = await refreshGoogleTokenNow();
+        if (refreshed) {
+          token = refreshed;
+          response = await tryUpload(token);
+        }
+      } catch (refreshErr) {
+        console.error('[ContractGenerator] Token refresh failed during retry:', refreshErr);
+      }
+    }
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      console.error('[ContractGenerator] Drive upload failed:', response.status, err);
+      console.error('[ContractGenerator] Drive upload failed:', response.status, JSON.stringify(err));
       return null;
     }
 

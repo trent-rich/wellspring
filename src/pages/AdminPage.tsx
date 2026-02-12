@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Shield, Users, RefreshCw, AlertCircle, UserPlus, Send, Mail } from 'lucide-react';
-import { supabase, supabaseAdmin } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
+import { adminInviteUser } from '../lib/edgeFunctions';
 import type { User } from '../types';
 
 const AVAILABLE_ROLES = [
@@ -74,32 +75,22 @@ export default function AdminPage() {
     setSuccess(null);
 
     try {
-      if (!supabaseAdmin) {
-        setError('Service role key not configured. Cannot send invites.');
+      // Get current user's JWT for Edge Function auth
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        setError('Not authenticated. Please sign in again.');
         setInviting(false);
         return;
       }
 
-      // Use Supabase admin to invite user by email
-      const { data, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      // Invite via Edge Function (service role key stays server-side)
+      await adminInviteUser(
         inviteEmail.trim(),
-        {
-          redirectTo: `${window.location.origin}`,
-          data: { role: inviteRole },
-        }
+        inviteRole,
+        `${window.location.origin}`,
+        accessToken
       );
-
-      if (inviteError) throw inviteError;
-
-      // Pre-create the user profile with the assigned role
-      if (data.user) {
-        await supabaseAdmin.from('users').upsert({
-          id: data.user.id,
-          email: inviteEmail.trim(),
-          role: inviteRole,
-          full_name: null,
-        });
-      }
 
       setSuccess(`Invite sent to ${inviteEmail} with ${inviteRole} role`);
       setInviteEmail('');

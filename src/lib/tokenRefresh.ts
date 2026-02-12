@@ -15,9 +15,8 @@
  * 4. If the access token is already expired, callers can use refreshGoogleTokenNow()
  */
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET;
-const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token';
+import { refreshGoogleToken } from './edgeFunctions';
+
 const ENCRYPTED_RT_KEY = 'google_rt_enc';
 const ENCRYPTION_KEY_SALT = 'wellspring-rt-salt-v1';
 
@@ -190,43 +189,23 @@ export async function refreshGoogleTokenNow(): Promise<string | null> {
   isRefreshing = true;
 
   try {
-    const refreshToken = await getStoredRefreshToken();
-    if (!refreshToken) {
+    const refreshTokenValue = await getStoredRefreshToken();
+    if (!refreshTokenValue) {
       console.log('[TokenRefresh] No refresh token available');
       return null;
     }
 
-    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-      console.error('[TokenRefresh] Missing Google client credentials');
+    console.log('[TokenRefresh] Refreshing Google access token via Edge Function...');
+
+    const data = await refreshGoogleToken(refreshTokenValue);
+
+    if (!data) {
+      console.error('[TokenRefresh] Refresh failed via Edge Function');
+      // The Edge Function returns 400 for invalid_grant — clear token on failure
+      clearRefreshToken();
       return null;
     }
 
-    console.log('[TokenRefresh] Refreshing Google access token...');
-
-    const response = await fetch(GOOGLE_TOKEN_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: GOOGLE_CLIENT_ID,
-        client_secret: GOOGLE_CLIENT_SECRET,
-        refresh_token: refreshToken,
-        grant_type: 'refresh_token',
-      }),
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      console.error('[TokenRefresh] Refresh failed:', response.status, err);
-
-      // If refresh token is invalid/revoked, clear it
-      if (response.status === 400 && err.error === 'invalid_grant') {
-        console.warn('[TokenRefresh] Refresh token revoked or expired — user must re-authenticate');
-        clearRefreshToken();
-      }
-      return null;
-    }
-
-    const data = await response.json();
     const newAccessToken = data.access_token;
     const expiresInSec = data.expires_in || 3600;
 

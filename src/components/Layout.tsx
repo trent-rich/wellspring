@@ -21,6 +21,7 @@ import { cn, getUserStateColor, getUserStateLabel } from '../lib/utils';
 import ScheduleStrip from './ScheduleStrip';
 import CommandBar from './CommandBar';
 import GeodeWorkflowModal from './GeodeWorkflowModal';
+import ExecutionToasts from './ExecutionToasts';
 import type { TaskWithRelations } from '../types';
 
 const navItems = [
@@ -195,6 +196,9 @@ export default function Layout() {
           onComplete={() => setGeodeTask(null)}
         />
       )}
+
+      {/* Background execution toasts */}
+      <ExecutionToasts />
     </div>
   );
 }

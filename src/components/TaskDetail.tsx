@@ -71,9 +71,18 @@ export default function TaskDetail({ task, onClose, onExecuteGeode }: TaskDetail
     setIsEditing(false);
   };
 
+  const [isCompleting, setIsCompleting] = useState(false);
+
   const handleComplete = async () => {
-    await completeTask(task.id);
-    onClose();
+    if (isCompleting) return;
+    setIsCompleting(true);
+    try {
+      await completeTask(task.id);
+      onClose();
+    } catch (err) {
+      console.error('[TaskDetail] Complete failed:', err);
+      setIsCompleting(false);
+    }
   };
 
   const handleSnooze = async (hours: number) => {
@@ -391,9 +400,25 @@ export default function TaskDetail({ task, onClose, onExecuteGeode }: TaskDetail
               </button>
             )}
             {task.status !== 'completed' && (
-              <button onClick={handleComplete} className="btn btn-primary flex-1">
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Complete
+              <button
+                onClick={handleComplete}
+                disabled={isCompleting}
+                className="btn btn-primary flex-1 disabled:opacity-50"
+              >
+                {isCompleting ? (
+                  <>
+                    <svg className="w-4 h-4 mr-2 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Completing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Complete
+                  </>
+                )}
               </button>
             )}
             <button onClick={() => setIsEditing(true)} className="btn btn-secondary flex-1">

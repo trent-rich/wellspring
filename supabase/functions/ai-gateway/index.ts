@@ -39,7 +39,7 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/
 
 // Types
 type AIProvider = 'claude' | 'gpt4' | 'gemini';
-type AIAction = 'extract_tasks' | 'prioritize' | 'create_artifact' | 'voice_response';
+type AIAction = 'extract_tasks' | 'prioritize' | 'create_artifact' | 'voice_response' | 'chat';
 
 interface AIGatewayRequest {
   provider: AIProvider;
@@ -107,9 +107,26 @@ Respond ONLY with valid JSON:
 };
 
 // Call Anthropic Claude API
-async function callClaude(prompt: string, userContent: string): Promise<string> {
+async function callClaude(
+  prompt: string,
+  userContent: string,
+  options?: { model?: string; max_tokens?: number; system?: string }
+): Promise<string> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured');
+
+  const model = options?.model || 'claude-3-haiku-20240307';
+  const max_tokens = options?.max_tokens || 2048;
+
+  // For chat action, use system prompt separately; for structured actions, combine prompt + content
+  const requestBody: Record<string, unknown> = {
+    model,
+    max_tokens,
+    messages: [{ role: 'user', content: options?.system ? userContent : `${prompt}\n\n---\n\n${userContent}` }],
+  };
+  if (options?.system) {
+    requestBody.system = options.system;
+  }
 
   const response = await fetch(ANTHROPIC_API_URL, {
     method: 'POST',
@@ -118,11 +135,7 @@ async function callClaude(prompt: string, userContent: string): Promise<string> 
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
     },
-    body: JSON.stringify({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 2048,
-      messages: [{ role: 'user', content: `${prompt}\n\n---\n\n${userContent}` }],
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -287,8 +300,34 @@ serve(async (req) => {
     }
 
     // Validate action
-    if (!['extract_tasks', 'prioritize', 'create_artifact', 'voice_response'].includes(body.action)) {
+    const validActions = ['extract_tasks', 'prioritize', 'create_artifact', 'voice_response', 'chat'];
+    if (!validActions.includes(body.action)) {
       return errorResponse(`Invalid action: ${body.action}`);
+    }
+
+    // Handle 'chat' action — free-form system+user prompt passthrough
+    if (body.action === 'chat') {
+      const { system, message, model, max_tokens } = body.payload as {
+        system?: string;
+        message: string;
+        model?: string;
+        max_tokens?: number;
+      };
+
+      if (!message) {
+        return errorResponse('payload.message is required for chat action');
+      }
+
+      const chatModel = model || 'claude-sonnet-4-20250514';
+      const chatMaxTokens = max_tokens || 1024;
+
+      const text = await callClaude('', message, {
+        model: chatModel,
+        max_tokens: chatMaxTokens,
+        system: system || undefined,
+      });
+
+      return successResponse({ text });
     }
 
     // Get prompt and inject today's date
