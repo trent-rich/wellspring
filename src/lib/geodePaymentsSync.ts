@@ -10,6 +10,11 @@ import {
   type AuthorInfo,
   type PaymentMilestoneDefinition,
 } from './geodePaymentEmails';
+import {
+  generateInvoiceDocx,
+  getMilestonePaymentAmount,
+  getMilestoneLabel,
+} from './invoiceGenerator';
 
 // ============================================
 // PAYMENTS BOARD STRUCTURE
@@ -52,44 +57,55 @@ export const PAYMENTS_COLUMN_IDS = {
 // ============================================
 
 // Maps chapter workflow steps to payment milestones that should be triggered
+// These map to the COMPLETED step (i.e., the step that just finished when advancing)
 export const WORKFLOW_TO_PAYMENT_MAP: Record<string, keyof PaymentMilestones | null> = {
-  // Contract signing workflow
-  'contract_drafted': 'drafted',
-  'contract_sent_for_review': 'sentForReview',
-  'contract_approved': 'draftApproved',
-  'contract_signed': 'sentBoxSignature',
+  // Contract flow — track progress through these steps
+  'send_contract': 'sentBoxSignature',
 
-  // After contract is signed, first payment is triggered
-  'author_onboarded': 'distribution1',
+  // Payment 1 (37.5%): Triggered when awaiting_contract_signature COMPLETES
+  'awaiting_contract_signature': 'distribution1',
 
-  // Draft submission triggers milestone
-  'author_draft_submitted': 'roughDraftReceived',
+  // Payment 2 (37.5%): Triggered when author_approval_round_1 COMPLETES
+  'author_approval_round_1': 'roughDraftReceived',
+
+  // Payment 3 (25%): Triggered when author_approval_round_3 COMPLETES
+  'author_approval_round_3': null, // Tracked via PAYMENT_TRIGGERS, no checkbox column yet
 
   // Standard chapter workflow steps that don't trigger payments
   'not_started': null,
-  'drafting': null,
-  'internal_review': null,
+  'outreach_identify_authors': null,
+  'schedule_meeting': null,
+  'explain_project': null,
+  'awaiting_author_responses': null,
+  'ai_deep_research_draft': null,
+  'maria_initial_review': null,
   'content_approver_review_1': null,
   'drew_review': null,
-  'maria_review_1': null,
+  'content_approver_review_2': null,
   'maria_edit_pass': null,
-  'author_approval_round_1': null,  // Author reviewing, no payment yet
+  'drew_content_approver_review': null,
   'peer_review': null,
+  'author_approval_round_2': null,
   'copywriter_pass': null,
-  'final_review': null,
+  'doe_ready': null,
+  'design_phase': null,
   'done': null,
 };
 
-// Payment triggers based on workflow completion
+// Payment triggers based on workflow step COMPLETION
+// When a step in the array COMPLETES (work moves to next step), the payment is triggered
 export const PAYMENT_TRIGGERS = {
-  // Payment #1: Triggered when contract is signed
-  payment1: ['contract_signed', 'author_onboarded'],
+  // Payment #1 (37.5%): Triggered when awaiting_contract_signature completes
+  // (author signed the contract, moves to awaiting_author_responses)
+  payment1: ['awaiting_contract_signature'],
 
-  // Payment #2 (if applicable): Triggered when author completes first draft
-  payment2: ['author_draft_submitted', 'author_approval_round_1'],
+  // Payment #2 (37.5%): Triggered when author_approval_round_1 completes
+  // (author finished reviewing first draft, moves to content_approver_review_2)
+  payment2: ['author_approval_round_1'],
 
-  // Final Payment: Triggered when chapter is complete
-  finalPayment: ['done'],
+  // Payment #3 (25%): Triggered when author_approval_round_3 completes
+  // (author gave final publication approval, moves to doe_ready)
+  payment3: ['author_approval_round_3'],
 };
 
 // ============================================
@@ -202,19 +218,33 @@ export async function syncChapterToPayments(
 
 export interface PaymentEmailResult {
   emailType: 'accounting_setup' | 'invoice_reminder' | null;
-  emailData: ReturnType<typeof generateAccountingSetupEmail> | ReturnType<typeof generateInvoiceReminderEmail> | null;
+  emailData: {
+    to: string[];
+    cc: string[];
+    subject: string;
+    body: string;
+    attachment?: { filename: string; mimeType: string; content: string };
+  } | null;
   milestone: PaymentMilestoneDefinition | null;
 }
 
 /**
- * Get the email that should be sent when a workflow step is reached
- * Returns the email data to be sent (actual sending is done by the caller/Ralph)
+ * Get the email that should be sent when a workflow step is completed.
+ * For invoice milestones, generates a prefilled invoice DOCX and attaches it.
+ * Returns the email data to be sent (actual sending is done by the caller).
+ *
+ * @param completedStep - The workflow step that just COMPLETED
+ * @param authorInfo - Author information for the email
+ * @param grantAmount - Total grant amount (default $5,000)
+ * @param chapterNum - Chapter number for the invoice description
  */
-export function getPaymentEmailForStep(
-  workflowStep: string,
-  authorInfo: AuthorInfo
-): PaymentEmailResult {
-  const { sendInvoiceReminder, sendAccountingSetup, milestone } = shouldSendPaymentEmail(workflowStep);
+export async function getPaymentEmailForStep(
+  completedStep: string,
+  authorInfo: AuthorInfo,
+  grantAmount: number = 5000,
+  chapterNum?: string
+): Promise<PaymentEmailResult> {
+  const { sendInvoiceReminder, sendAccountingSetup, milestone } = shouldSendPaymentEmail(completedStep);
 
   if (sendAccountingSetup && milestone) {
     // Contract sent for signature - email accounting
@@ -222,22 +252,59 @@ export function getPaymentEmailForStep(
       emailType: 'accounting_setup',
       emailData: generateAccountingSetupEmail({
         authorInfo,
-        // Contract URL would be added by Ralph from Box/DocuSign
+        paymentAmount: `$${grantAmount.toLocaleString()}`,
+        paymentSchedule: '37.5% / 37.5% / 25% across 3 milestones',
       }),
       milestone,
     };
   }
 
   if (sendInvoiceReminder && milestone) {
-    // Payment milestone triggered - remind author to submit invoice
+    // Payment milestone triggered — generate prefilled invoice
+    const paymentNumber = milestone.paymentNumber;
+    const paymentAmount = getMilestonePaymentAmount(grantAmount, paymentNumber);
+    const milestoneLabel = getMilestoneLabel(paymentNumber);
+
+    let invoiceAttachment: { filename: string; mimeType: string; base64: string } | undefined;
+
+    try {
+      const invoice = await generateInvoiceDocx({
+        authorName: authorInfo.name,
+        authorEmail: authorInfo.email,
+        state: authorInfo.state.toLowerCase().replace(/\s+/g, '_'),
+        stateName: authorInfo.state,
+        chapterTitle: authorInfo.chapterTitle,
+        chapterNum: chapterNum || authorInfo.chapter,
+        paymentNumber,
+        paymentAmount,
+        totalGrantAmount: grantAmount,
+        milestoneLabel,
+      });
+
+      invoiceAttachment = {
+        filename: invoice.filename,
+        mimeType: invoice.mimeType,
+        base64: invoice.base64,
+      };
+
+      console.log('[PaymentsSync] Generated prefilled invoice:', invoice.filename);
+    } catch (error) {
+      console.error('[PaymentsSync] Failed to generate invoice:', error);
+      // Continue without attachment — email will instruct author to use template
+    }
+
+    const emailData = generateInvoiceReminderEmail({
+      authorInfo,
+      milestone: milestone.workflowStep,
+      milestoneLabel,
+      paymentNumber,
+      paymentAmount: `$${paymentAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+      invoiceAttachment,
+    });
+
     return {
       emailType: 'invoice_reminder',
-      emailData: generateInvoiceReminderEmail({
-        authorInfo,
-        milestone: milestone.workflowStep,
-        milestoneLabel: milestone.milestoneLabel,
-        paymentNumber: milestone.paymentNumber,
-      }),
+      emailData,
       milestone,
     };
   }
@@ -252,19 +319,24 @@ export function getPaymentEmailForStep(
 /**
  * Full payment sync with email generation
  * Returns both Monday.com update status and any email that should be sent
+ *
+ * @param grantAmount - Total grant amount for invoice generation (default $5,000)
+ * @param chapterNum - Chapter number for the invoice description
  */
 export async function syncChapterToPaymentsWithEmail(
   contributorItemId: string,
   workflowStep: string,
   chapterTitle: string,
-  authorInfo: AuthorInfo
+  authorInfo: AuthorInfo,
+  grantAmount: number = 5000,
+  chapterNum?: string
 ): Promise<{
   mondayUpdated: boolean;
   milestone?: string;
   email: PaymentEmailResult;
 }> {
-  // Get any emails that should be sent
-  const email = getPaymentEmailForStep(workflowStep, authorInfo);
+  // Get any emails that should be sent (now async — generates invoice if needed)
+  const email = await getPaymentEmailForStep(workflowStep, authorInfo, grantAmount, chapterNum);
 
   // Sync to Monday.com
   const { triggered, milestone } = await syncChapterToPayments(

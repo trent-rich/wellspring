@@ -53,6 +53,7 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
   const [selectedChapter, setSelectedChapter] = useState<GeodeContentSection | null>(null);
   const [authorName, setAuthorName] = useState('');
   const [authorEmail, setAuthorEmail] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState<number>(5000);
   const [isExecuting, setIsExecuting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -139,6 +140,7 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
           workflowType: selectedWorkflow,
           ...(authorName && { authorName }),
           ...(authorEmail && { authorEmail }),
+          ...(selectedWorkflow === 'author_outreach' && { paymentAmount: String(paymentAmount) }),
         },
         suggestedActions: actions,
         status: 'pending' as const,
@@ -443,6 +445,29 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
                     required={selectedWorkflow === 'author_outreach'}
                   />
                 </div>
+
+                {/* Grant Amount — only for author outreach */}
+                {selectedWorkflow === 'author_outreach' && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Grant Amount
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-sm text-gray-500">$</span>
+                      <input
+                        type="number"
+                        value={paymentAmount}
+                        onChange={(e) => setPaymentAmount(Number(e.target.value) || 5000)}
+                        className="w-full pl-7 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-watershed-500"
+                        min={0}
+                        step={100}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Payment split: ${(paymentAmount * 0.375).toLocaleString()} / ${(paymentAmount * 0.375).toLocaleString()} / ${(paymentAmount * 0.25).toLocaleString()}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {error && (

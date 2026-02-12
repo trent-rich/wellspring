@@ -639,6 +639,90 @@ export interface GeodeAuthorDetails {
 }
 
 /**
+ * Check if an author already exists in a state group on the Payments board.
+ * Searches by item name (author name) within the specified state group.
+ * Returns the existing item ID if found, or null if not.
+ */
+export async function findAuthorInPaymentsBoard(
+  apiToken: string,
+  state: string,
+  authorName: string
+): Promise<{ exists: boolean; itemId?: string; itemName?: string }> {
+  try {
+    // Fetch state group IDs
+    const stateGroupIds = await fetchStateGroupIds(apiToken);
+    const groupId = stateGroupIds[state];
+
+    if (!groupId) {
+      console.warn('[MondayService] No group found for state:', state);
+      return { exists: false };
+    }
+
+    // Query items in the board, then filter by group and name
+    const query = `
+      query ($boardId: ID!) {
+        boards(ids: [$boardId]) {
+          items_page(limit: 200) {
+            items {
+              id
+              name
+              group {
+                id
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const response = await fetch(MONDAY_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': apiToken,
+        'API-Version': '2024-01',
+      },
+      body: JSON.stringify({
+        query,
+        variables: { boardId: PAYMENTS_BOARD_ID },
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('[MondayService] API error:', response.status);
+      return { exists: false };
+    }
+
+    const result = await response.json();
+    if (result.errors) {
+      console.error('[MondayService] GraphQL errors:', result.errors);
+      return { exists: false };
+    }
+
+    const items: Array<{ id: string; name: string; group: { id: string } }> =
+      result.data?.boards?.[0]?.items_page?.items || [];
+
+    // Filter to items in the same state group, then match by name (case-insensitive)
+    const normalizedName = authorName.toLowerCase().trim();
+    const match = items.find(
+      (item) =>
+        item.group.id === groupId &&
+        item.name.toLowerCase().trim() === normalizedName
+    );
+
+    if (match) {
+      console.log('[MondayService] Found existing author:', match.name, 'ID:', match.id);
+      return { exists: true, itemId: match.id, itemName: match.name };
+    }
+
+    return { exists: false };
+  } catch (error) {
+    console.error('[MondayService] Error searching for author:', error);
+    return { exists: false };
+  }
+}
+
+/**
  * Add a GEODE author to the Payments board under the appropriate state group
  * Per SOP: Contract owner uploads contract details to Monday.com
  */

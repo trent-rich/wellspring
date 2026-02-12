@@ -12,8 +12,11 @@ import { addMondayComment, getMondayStatusLabel } from '../lib/geodeMondaySync';
 import {
   syncChapterToPaymentsWithEmail,
   shouldTriggerPayment,
+  getPaymentEmailForStep,
   type PaymentEmailResult,
 } from '../lib/geodePaymentsSync';
+import { shouldSendPaymentEmail } from '../lib/geodePaymentEmails';
+import { createDraftWithAttachment, createDraft, isGmailConnected } from '../lib/gmailService';
 
 // ============================================
 // STORE INTERFACE
@@ -403,7 +406,8 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
           return { triggered: false, email: null };
         }
 
-        const chapterTitle = GEODE_CHAPTER_TYPES.find(c => c.value === chapterType)?.label || chapterType;
+        const chapterInfo = GEODE_CHAPTER_TYPES.find(c => c.value === chapterType);
+        const chapterTitle = chapterInfo?.label || chapterType;
         const stateInfo = GEODE_STATES.find(s => s.value === state);
 
         // Build author info for email generation
@@ -415,11 +419,15 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
           state: stateInfo?.label || state,
         };
 
+        const grantAmount = chapter.grantAmount || 5000;
+
         const result = await syncChapterToPaymentsWithEmail(
           contributorId,
           workflowStep,
           chapterTitle,
-          authorInfo
+          authorInfo,
+          grantAmount,
+          chapterInfo?.chapterNum
         );
 
         if (result.mondayUpdated) {
@@ -441,6 +449,8 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
         const chapter = get().chapters[key];
         if (!chapter) return;
 
+        // The step that is being COMPLETED is the chapter's current step
+        const completedStep = chapter.currentStep;
         const now = new Date().toISOString();
 
         // Complete current step in history
@@ -494,6 +504,63 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
               }
             });
           }
+        }
+
+        // Check if the COMPLETED step triggers a payment milestone
+        // If so, generate a prefilled invoice and create a Gmail draft
+        const { sendInvoiceReminder } = shouldSendPaymentEmail(completedStep);
+        if (sendInvoiceReminder && chapter.authorEmail && chapter.authorName) {
+          const chapterInfo = GEODE_CHAPTER_TYPES.find(c => c.value === chapterType);
+          const stateInfo = GEODE_STATES.find(s => s.value === state);
+
+          const authorInfo = {
+            name: chapter.authorName,
+            email: chapter.authorEmail,
+            chapter: chapterType,
+            chapterTitle: chapterInfo?.label || chapterType,
+            state: stateInfo?.label || state,
+          };
+
+          const grantAmount = chapter.grantAmount || 5000;
+
+          // Generate invoice email asynchronously (fire and forget with logging)
+          getPaymentEmailForStep(completedStep, authorInfo, grantAmount, chapterInfo?.chapterNum)
+            .then(async (emailResult) => {
+              if (emailResult.emailData && isGmailConnected()) {
+                console.log('[GeodeStore] Creating invoice email draft for:', chapter.authorName);
+
+                let draftResult;
+                if (emailResult.emailData.attachment) {
+                  draftResult = await createDraftWithAttachment({
+                    to: emailResult.emailData.to,
+                    cc: emailResult.emailData.cc,
+                    subject: emailResult.emailData.subject,
+                    body: emailResult.emailData.body,
+                    isHtml: false,
+                    attachment: emailResult.emailData.attachment,
+                  });
+                } else {
+                  draftResult = await createDraft({
+                    to: emailResult.emailData.to,
+                    cc: emailResult.emailData.cc,
+                    subject: emailResult.emailData.subject,
+                    body: emailResult.emailData.body,
+                    isHtml: false,
+                  });
+                }
+
+                if (draftResult.success) {
+                  console.log('[GeodeStore] Invoice email draft created:', draftResult.draftId);
+                } else {
+                  console.error('[GeodeStore] Failed to create invoice draft:', draftResult.error);
+                }
+              } else if (!isGmailConnected()) {
+                console.warn('[GeodeStore] Gmail not connected — invoice email skipped for:', chapter.authorName);
+              }
+            })
+            .catch(error => {
+              console.error('[GeodeStore] Error generating invoice email:', error);
+            });
         }
       },
 

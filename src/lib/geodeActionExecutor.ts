@@ -375,6 +375,7 @@ async function executeGenerateOutreachContract(
     chapterType: task.chapterType!,
     chapterName: chapterInfo.label,
     chapterNum: chapterInfo.chapterNum,
+    paymentAmount: task.paymentAmount,
   });
 
   if (!contract) {
@@ -972,6 +973,7 @@ async function executeUploadContractMonday(
     chapterTitle: chapterInfo.label,
     chapterNum: chapterInfo.chapterNum,
     contractSignedDate: new Date().toISOString().split('T')[0],
+    grantAmount: task.paymentAmount || 5000,
   });
 
   if (result.success) {
@@ -1086,6 +1088,99 @@ Director of Strategic Initiatives | Project InnerSpace`;
   }
 }
 
+/**
+ * Execute: add_to_monday_payments
+ * Adds author to the GEODE Payments board during outreach workflow.
+ * Checks for duplicates first — skips if author already exists in the state group.
+ */
+async function executeAddToMondayPayments(
+  action: GeodeSuggestedAction,
+  task: GeodeConfirmationTask
+): Promise<ActionExecutionResult> {
+  const stateInfo = task.state ? GEODE_STATES.find(s => s.value === task.state) : null;
+  const chapterInfo = task.chapterType ? GEODE_CHAPTER_TYPES.find(c => c.value === task.chapterType) : null;
+
+  if (!stateInfo || !chapterInfo || !task.authorName || !task.authorEmail) {
+    return {
+      actionId: action.id,
+      success: false,
+      message: 'Missing required information (state, chapter, author name, or email)',
+    };
+  }
+
+  const mondayToken = localStorage.getItem('monday_api_token');
+  if (!mondayToken) {
+    return {
+      actionId: action.id,
+      success: false,
+      message: 'Monday.com is not connected. Please configure API token in Settings.',
+    };
+  }
+
+  // Check for duplicate first
+  const { findAuthorInPaymentsBoard, addAuthorToPaymentsBoard: addAuthor } = await import('./mondayService');
+
+  const existing = await findAuthorInPaymentsBoard(mondayToken, task.state || '', task.authorName);
+
+  if (existing.exists) {
+    return {
+      actionId: action.id,
+      success: true,
+      message: `Author "${task.authorName}" already exists in ${stateInfo.label} group (Item ID: ${existing.itemId}). Skipped duplicate creation.`,
+      artifacts: [
+        {
+          type: 'log_entry',
+          details: {
+            action: 'monday_payments_duplicate_skipped',
+            author: task.authorName,
+            state: stateInfo.label,
+            existingItemId: existing.itemId,
+          },
+        },
+      ],
+    };
+  }
+
+  // No duplicate — create new item
+  const result = await addAuthor(mondayToken, {
+    name: task.authorName,
+    email: task.authorEmail,
+    state: task.state || '',
+    chapterType: task.chapterType || '',
+    chapterTitle: chapterInfo.label,
+    chapterNum: chapterInfo.chapterNum,
+    grantAmount: task.paymentAmount || 5000,
+  });
+
+  if (result.success) {
+    return {
+      actionId: action.id,
+      success: true,
+      message: `Author added to GEODE Payments board under ${stateInfo.label} group (Item ID: ${result.itemId})`,
+      artifacts: [
+        {
+          type: 'status_update',
+          id: result.itemId,
+          url: 'https://projectinnerspace.monday.com/boards/5640622226',
+          details: {
+            itemId: result.itemId,
+            author: task.authorName,
+            state: stateInfo.label,
+            chapter: `${chapterInfo.chapterNum} - ${chapterInfo.label}`,
+            grantAmount: task.paymentAmount || 5000,
+          },
+        },
+      ],
+    };
+  } else {
+    return {
+      actionId: action.id,
+      success: false,
+      message: result.error || 'Failed to add author to Payments board',
+    };
+  }
+}
+
 // ============================================
 // MAIN EXECUTOR
 // ============================================
@@ -1109,6 +1204,9 @@ export async function executeAction(
 
     case 'send_outreach_email':
       return executeSendOutreachEmail(action, task);
+
+    case 'add_to_monday_payments':
+      return executeAddToMondayPayments(action, task);
 
     // Author Agreement actions (post-agreement)
     case 'generate_contract':

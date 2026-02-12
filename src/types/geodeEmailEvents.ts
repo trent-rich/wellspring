@@ -98,6 +98,9 @@ export interface GeodeConfirmationTask {
   authorName?: string;
   authorEmail?: string;
 
+  // Payment
+  paymentAmount?: number;   // Total grant amount (defaults to 5000)
+
   // Contract attachment reference (from email sent to author)
   contractAttachment?: {
     sourceEmailId: string;      // Gmail message ID where contract was attached
@@ -237,6 +240,16 @@ export const AUTHOR_OUTREACH_ACTIONS: GeodeSuggestedAction[] = [
     priority: 'high',
     requiresConfirmation: true,
     autoExecutable: false,
+    params: {},
+  },
+  {
+    id: 'add_to_monday_payments',
+    actionType: 'add_to_monday_payments',
+    title: 'Add Author to Payments Board',
+    description: 'Add author to Monday.com GEODE Payments board under state group (skips if already exists)',
+    priority: 'normal',
+    requiresConfirmation: false,
+    autoExecutable: true,
     params: {},
   },
   {
@@ -509,6 +522,9 @@ export function createConfirmationTask(emailEvent: GeodeEmailEvent): GeodeConfir
     chapterType: emailEvent.detectedChapter,
     authorName: emailEvent.detectedAuthorName,
     authorEmail: emailEvent.detectedAuthorEmail,
+    paymentAmount: emailEvent.extractedDetails?.paymentAmount
+      ? Number(emailEvent.extractedDetails.paymentAmount)
+      : undefined,
     pendingActions: emailEvent.suggestedActions,
     status: 'pending',
     createdAt: new Date().toISOString(),

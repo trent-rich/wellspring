@@ -247,6 +247,7 @@ export interface ContractParams {
   chapterNum: string;
   timeline: ContractTimeline;
   chapterScopeText?: string; // Override default scope text
+  paymentAmount?: number;    // Total grant amount (defaults to 5000)
 }
 
 /**
@@ -264,6 +265,14 @@ export async function generateContractDocx(params: ContractParams): Promise<Blob
   } = params;
 
   const scopeText = params.chapterScopeText || getChapterScopeText(chapterType, stateName);
+
+  // Calculate payment amounts from total grant
+  const totalGrant = params.paymentAmount || 5000;
+  const payment1 = totalGrant * 0.375;
+  const payment2 = totalGrant * 0.375;
+  const payment3 = totalGrant * 0.25;
+  const fmtCurrency = (n: number) =>
+    `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const doc = new Document({
     sections: [
@@ -380,7 +389,7 @@ export async function generateContractDocx(params: ContractParams): Promise<Blob
             children: [
               new TextRun({ text: '2. PAYMENT FOR SERVICES. ', bold: true }),
               new TextRun({
-                text: 'The Recipient will pay compensation to the Contractor for the Services in the amount of $5,000. Invoices will be sent as detailed in Schedule A.',
+                text: `The Recipient will pay compensation to the Contractor for the Services in the amount of ${fmtCurrency(totalGrant)}. Invoices will be sent as detailed in Schedule A.`,
               }),
             ],
           }),
@@ -397,10 +406,10 @@ export async function generateContractDocx(params: ContractParams): Promise<Blob
 
           new Paragraph({ children: [] }),
 
-          new Paragraph({ children: [new TextRun({ text: 'Total Grant: $5,000.00' })] }),
-          new Paragraph({ children: [new TextRun({ text: 'Initial payment (37.5%): $1,875.00 - upon contract signing' })] }),
-          new Paragraph({ children: [new TextRun({ text: 'Second Payment (37.5%): $1,875.00 - upon completion of contractor review of Project InnerSpace first draft.' })] }),
-          new Paragraph({ children: [new TextRun({ text: "Final payment (25%): $1,125.00 - to be paid within 30 days of Project InnerSpace receiving the Contractor's final publication approval." })] }),
+          new Paragraph({ children: [new TextRun({ text: `Total Grant: ${fmtCurrency(totalGrant)}` })] }),
+          new Paragraph({ children: [new TextRun({ text: `Initial payment (37.5%): ${fmtCurrency(payment1)} - upon contract signing` })] }),
+          new Paragraph({ children: [new TextRun({ text: `Second Payment (37.5%): ${fmtCurrency(payment2)} - upon completion of contractor review of Project InnerSpace first draft.` })] }),
+          new Paragraph({ children: [new TextRun({ text: `Final payment (25%): ${fmtCurrency(payment3)} - to be paid within 30 days of Project InnerSpace receiving the Contractor's final publication approval.` })] }),
 
           new Paragraph({ children: [] }),
 
@@ -913,6 +922,7 @@ export async function generateAndUploadContract(params: {
   chapterName: string;
   chapterNum: string;
   chapterScopeText?: string;
+  paymentAmount?: number;
 }): Promise<GeneratedContract | null> {
   const stateInfo = GEODE_STATES.find(s => s.value === params.state);
   if (!stateInfo) {
@@ -951,6 +961,7 @@ export async function generateAndUploadContract(params: {
       chapterNum: params.chapterNum,
       timeline,
       chapterScopeText: params.chapterScopeText,
+      paymentAmount: params.paymentAmount,
     });
 
     console.log('[ContractGenerator] DOCX generated:', filename, `(${Math.round(blob.size / 1024)}KB)`);

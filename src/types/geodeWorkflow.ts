@@ -570,6 +570,7 @@ export interface ChapterWorkflowState {
   authorEmail: string | null;
   contractSigned: boolean;
   contractSignedDate: string | null;
+  grantAmount?: number;  // Total contract grant amount (defaults to 5000)
 }
 
 // ============================================
