@@ -449,8 +449,9 @@ export async function fetchRecentEmails(options: {
   query?: string;
   unreadOnly?: boolean;
   sinceDate?: Date;
+  folder?: 'inbox' | 'sent' | 'all';
 } = {}): Promise<ParsedEmail[]> {
-  const { maxResults = 20, query, unreadOnly = false, sinceDate } = options;
+  const { maxResults = 20, query, unreadOnly = false, sinceDate, folder = 'inbox' } = options;
 
   // Build Gmail search query
   const queryParts: string[] = [];
@@ -461,8 +462,13 @@ export async function fetchRecentEmails(options: {
     queryParts.push(`after:${dateStr}`);
   }
 
-  // Only get inbox emails (not sent, spam, trash)
-  queryParts.push('in:inbox');
+  // Filter by folder
+  if (folder === 'inbox') {
+    queryParts.push('in:inbox');
+  } else if (folder === 'sent') {
+    queryParts.push('in:sent');
+  }
+  // 'all' = no folder filter
 
   const listResult = await listEmails({
     maxResults,
@@ -477,6 +483,20 @@ export async function fetchRecentEmails(options: {
   const fullMessages = await getEmails(messageIds);
 
   return fullMessages.map(parseEmail);
+}
+
+/**
+ * Fetch sent emails (convenience wrapper)
+ */
+export async function fetchSentEmails(options: {
+  maxResults?: number;
+  query?: string;
+  sinceDate?: Date;
+} = {}): Promise<ParsedEmail[]> {
+  return fetchRecentEmails({
+    ...options,
+    folder: 'sent',
+  });
 }
 
 /**

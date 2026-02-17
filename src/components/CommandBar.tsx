@@ -4,9 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTaskStore } from '../store/taskStore';
 import { useUserStateStore } from '../store/userStateStore';
 import { useSequencingStore } from '../store/sequencingStore';
+import { useGeodeChapterStore } from '../store/geodeChapterStore';
 import type { VoiceCommand, TaskWithRelations } from '../types';
+import { GEODE_CHAPTER_TYPES, GEODE_STATES } from '../types/geode';
+import { getStepMeta, calculateWorkflowProgress } from '../types/geodeWorkflow';
 import { cn, parseTaskId } from '../lib/utils';
 import { aiChat } from '../lib/edgeFunctions';
+import { isGmailConnected, fetchRecentEmails, fetchSentEmails } from '../lib/gmailService';
+import type { ParsedEmail } from '../types/gmail';
 
 // Web Speech API types
 interface SpeechRecognitionEvent extends Event {
@@ -57,10 +62,11 @@ interface CommandBarProps {
 }
 
 // Build a context summary for Claude about the current app state
-function buildAppContext(): string {
+function buildAppContext(extraContext?: string): string {
   const taskStore = useTaskStore.getState();
   const sequencingStore = useSequencingStore.getState();
   const userStateStore = useUserStateStore.getState();
+  const geodeChapterStore = useGeodeChapterStore.getState();
 
   const tasks = taskStore.tasks || [];
   const openTasks = tasks.filter((t) => t.status !== 'completed').slice(0, 10);
@@ -68,15 +74,44 @@ function buildAppContext(): string {
   const confirmed = invitees.filter((i) => i.status === 'confirmed');
   const pending = invitees.filter((i) => i.status === 'sent' || i.status === 'follow_up_sent');
 
-  return `You are the AI assistant for Wellspring (Watershed Command Center), a project management tool for Project InnerSpace.
+  // Build GEODE chapter summary
+  const geodeLines: string[] = [];
+  for (const state of GEODE_STATES) {
+    const chapters = geodeChapterStore.getChaptersForState(state.value);
+    if (chapters.length === 0) continue;
+
+    const chapterSummaries = chapters.map((ch) => {
+      const chapterInfo = GEODE_CHAPTER_TYPES.find((c) => c.value === ch.chapterType);
+      const label = chapterInfo ? `Ch ${chapterInfo.chapterNum} ${chapterInfo.label}` : ch.chapterType;
+      const stepMeta = getStepMeta(ch.workflowType, ch.currentStep);
+      const stepLabel = stepMeta?.shortLabel || ch.currentStep;
+      const progress = calculateWorkflowProgress(ch.workflowType, ch.currentStep);
+      const parts = [`${label}: ${stepLabel} (${progress}%)`];
+      if (ch.currentOwner) parts.push(`owner: ${ch.currentOwner}`);
+      if (ch.blockers) parts.push(`BLOCKER: ${ch.blockers}`);
+      if (ch.notes) parts.push(`notes: ${ch.notes}`);
+      return parts.join(' | ');
+    });
+
+    geodeLines.push(`  ${state.label} (${state.abbreviation}) [DOE deadline: ${state.doeDeadline}]:`);
+    chapterSummaries.forEach((s) => geodeLines.push(`    - ${s}`));
+  }
+
+  const gmailStatus = isGmailConnected() ? 'Connected' : 'Not connected';
+
+  let context = `You are the AI assistant for Wellspring (Watershed Command Center), a project management tool for Project InnerSpace's GEODE state geothermal reports.
 
 Current app state:
 - User state: ${userStateStore.currentState}
+- Gmail: ${gmailStatus}
 - Open tasks: ${openTasks.length} (${openTasks.slice(0, 5).map((t) => `"${t.title}" [${t.short_id}]`).join(', ')})
 - Sequencing: ${invitees.length} total invitees for CERA Week 2026
   - Confirmed: ${confirmed.length} (${confirmed.map((i) => i.name).join(', ') || 'none yet'})
   - Invitation sent: ${pending.length}
   - Not started: ${invitees.filter((i) => i.status === 'not_started').length}
+
+GEODE Report Chapter Status:
+${geodeLines.length > 0 ? geodeLines.join('\n') : '  No chapters initialized yet.'}
 
 Available app commands the user can run:
 - "go to [dashboard/tasks/ideas/calendar/geode/sequencing/admin]" - navigate
@@ -84,15 +119,84 @@ Available app commands the user can run:
 - "complete [task ID]" - mark task as done
 - "execute geode [task ID]" - run GEODE workflow
 - "start focus [duration]" - enter focus mode
-- "end focus" - exit focus mode
+- "end focus" - exit focus mode`;
 
-Respond concisely (1-3 sentences). If the user's question can be answered with app data, answer it. If they need to run a command, suggest the exact command. Be direct and helpful.`;
+  if (extraContext) {
+    context += `\n\n--- Live Data ---\n${extraContext}`;
+  }
+
+  context += `\n\nRespond helpfully based on all available data. If the user asks about emails, use the email data provided. If they ask about GEODE chapters, use the chapter status above. Be direct and specific.`;
+
+  return context;
+}
+
+// Detect if a query is about emails so we can pre-fetch email data
+function isEmailQuery(text: string): { isEmail: boolean; wantsSent: boolean; wantsReceived: boolean; count: number } {
+  const lower = text.toLowerCase();
+  const emailKeywords = ['email', 'emails', 'gmail', 'inbox', 'sent', 'message', 'messages', 'mail'];
+  const isEmail = emailKeywords.some((k) => lower.includes(k));
+
+  const wantsSent = lower.includes('sent') || lower.includes('i sent') || lower.includes('my sent') || lower.includes('outgoing');
+  const wantsReceived = lower.includes('receiv') || lower.includes('inbox') || lower.includes('incoming') || lower.includes('got');
+
+  // Extract count from query (e.g., "last 25 emails")
+  const countMatch = text.match(/(\d+)\s*(email|message|mail)/i);
+  const count = countMatch ? Math.min(parseInt(countMatch[1]), 50) : 25;
+
+  return { isEmail, wantsSent, wantsReceived, count };
+}
+
+// Summarize emails for Claude context (respects token limits)
+function summarizeEmails(emails: ParsedEmail[], label: string): string {
+  if (emails.length === 0) return `${label}: None found.\n`;
+
+  const lines = [`${label} (${emails.length} emails):`];
+  for (const email of emails) {
+    const date = email.date instanceof Date ? email.date.toLocaleDateString() : String(email.date);
+    const from = email.from.name || email.from.email;
+    const to = email.to.map((t) => t.name || t.email).join(', ');
+    // Truncate body for context window
+    const bodyPreview = (email.body || email.snippet || '').slice(0, 200);
+    lines.push(`  - [${date}] From: ${from} | To: ${to} | Subject: ${email.subject}`);
+    lines.push(`    Preview: ${bodyPreview}`);
+  }
+  return lines.join('\n');
 }
 
 async function askClaude(question: string): Promise<string | null> {
+  let extraContext = '';
+
+  // Check if this is an email-related query and pre-fetch data
+  const emailAnalysis = isEmailQuery(question);
+  if (emailAnalysis.isEmail && isGmailConnected()) {
+    try {
+      const fetchPromises: Promise<ParsedEmail[]>[] = [];
+      const labels: string[] = [];
+
+      if (emailAnalysis.wantsSent || (!emailAnalysis.wantsSent && !emailAnalysis.wantsReceived)) {
+        fetchPromises.push(fetchSentEmails({ maxResults: emailAnalysis.count }));
+        labels.push('Sent Emails');
+      }
+      if (emailAnalysis.wantsReceived || (!emailAnalysis.wantsSent && !emailAnalysis.wantsReceived)) {
+        fetchPromises.push(fetchRecentEmails({ maxResults: emailAnalysis.count, folder: 'inbox' }));
+        labels.push('Received Emails');
+      }
+
+      const results = await Promise.all(fetchPromises);
+      results.forEach((emails, i) => {
+        extraContext += summarizeEmails(emails, labels[i]) + '\n';
+      });
+    } catch (err) {
+      console.error('[CommandBar] Failed to fetch emails for context:', err);
+      extraContext += 'Gmail error: Could not fetch emails. Token may have expired — user should reconnect Google account in Settings.\n';
+    }
+  } else if (emailAnalysis.isEmail && !isGmailConnected()) {
+    extraContext += 'Gmail is not connected. The user needs to connect their Google account in Settings > Integrations to enable email access.\n';
+  }
+
   return aiChat(question, {
-    system: buildAppContext(),
-    max_tokens: 300,
+    system: buildAppContext(extraContext),
+    max_tokens: 1024,
   });
 }
 
@@ -165,7 +269,7 @@ export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
   // Clear feedback after delay (longer for AI responses)
   useEffect(() => {
     if (feedback) {
-      const delay = feedback.type === 'ai' ? 10000 : 3000;
+      const delay = feedback.type === 'ai' ? 30000 : 3000;
       const timer = setTimeout(() => setFeedback(null), delay);
       return () => clearTimeout(timer);
     }
@@ -446,9 +550,9 @@ export default function CommandBar({ onGeodeWorkflow }: CommandBarProps) {
               <Sparkles className="w-3 h-3" /> Ask Claude
             </p>
             {[
-              'How many invitees are confirmed?',
+              'Summarize my last 10 sent emails',
+              'What is the status of Arizona GEODE chapters?',
               'What tasks are due today?',
-              'Summarize sequencing status',
             ].map((q) => (
               <button
                 key={q}
