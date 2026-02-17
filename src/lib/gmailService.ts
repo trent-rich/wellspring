@@ -63,6 +63,39 @@ export function getAccessToken(): string | null {
   return tokens.accessToken;
 }
 
+/**
+ * Get a valid access token, attempting silent refresh if expired.
+ * This is the async counterpart to getAccessToken().
+ */
+export async function getAccessTokenAsync(): Promise<string | null> {
+  // Try synchronous path first
+  const token = getAccessToken();
+  if (token) return token;
+
+  // Token expired — try silent refresh via the shared token refresh module
+  try {
+    const { getGoogleTokenAsync } = await import('./googleCalendar');
+    const refreshed = await getGoogleTokenAsync();
+    if (refreshed) {
+      // getGoogleTokenAsync already updates gmail_tokens in localStorage
+      return refreshed;
+    }
+  } catch (error) {
+    console.error('[GmailService] Silent token refresh failed:', error);
+  }
+
+  return null;
+}
+
+/**
+ * Check if Gmail is accessible (has valid token OR can refresh).
+ * Async version that attempts refresh before giving up.
+ */
+export async function ensureGmailConnected(): Promise<boolean> {
+  const token = await getAccessTokenAsync();
+  return !!token;
+}
+
 // ============================================
 // Gmail API Functions
 // ============================================
@@ -73,11 +106,12 @@ async function gmailFetch<T>(
 ): Promise<T> {
   console.log('[GmailService] gmailFetch called:', endpoint, options.method || 'GET');
 
-  const accessToken = getAccessToken();
+  // Try async token retrieval with silent refresh
+  const accessToken = await getAccessTokenAsync();
   console.log('[GmailService] Access token exists?', !!accessToken);
 
   if (!accessToken) {
-    console.error('[GmailService] No valid access token!');
+    console.error('[GmailService] No valid access token even after refresh attempt!');
     throw new Error('No valid Gmail access token. Please reconnect your Google account.');
   }
 

@@ -10,7 +10,7 @@ import { GEODE_CHAPTER_TYPES, GEODE_STATES } from '../types/geode';
 import { getStepMeta, calculateWorkflowProgress } from '../types/geodeWorkflow';
 import { cn, parseTaskId } from '../lib/utils';
 import { aiChat } from '../lib/edgeFunctions';
-import { isGmailConnected, fetchRecentEmails, fetchSentEmails } from '../lib/gmailService';
+import { isGmailConnected, ensureGmailConnected, fetchRecentEmails, fetchSentEmails } from '../lib/gmailService';
 import type { ParsedEmail } from '../types/gmail';
 
 // Web Speech API types
@@ -168,30 +168,34 @@ async function askClaude(question: string): Promise<string | null> {
 
   // Check if this is an email-related query and pre-fetch data
   const emailAnalysis = isEmailQuery(question);
-  if (emailAnalysis.isEmail && isGmailConnected()) {
-    try {
-      const fetchPromises: Promise<ParsedEmail[]>[] = [];
-      const labels: string[] = [];
+  if (emailAnalysis.isEmail) {
+    // Use async check that attempts silent token refresh before giving up
+    const gmailReady = await ensureGmailConnected();
+    if (gmailReady) {
+      try {
+        const fetchPromises: Promise<ParsedEmail[]>[] = [];
+        const labels: string[] = [];
 
-      if (emailAnalysis.wantsSent || (!emailAnalysis.wantsSent && !emailAnalysis.wantsReceived)) {
-        fetchPromises.push(fetchSentEmails({ maxResults: emailAnalysis.count }));
-        labels.push('Sent Emails');
-      }
-      if (emailAnalysis.wantsReceived || (!emailAnalysis.wantsSent && !emailAnalysis.wantsReceived)) {
-        fetchPromises.push(fetchRecentEmails({ maxResults: emailAnalysis.count, folder: 'inbox' }));
-        labels.push('Received Emails');
-      }
+        if (emailAnalysis.wantsSent || (!emailAnalysis.wantsSent && !emailAnalysis.wantsReceived)) {
+          fetchPromises.push(fetchSentEmails({ maxResults: emailAnalysis.count }));
+          labels.push('Sent Emails');
+        }
+        if (emailAnalysis.wantsReceived || (!emailAnalysis.wantsSent && !emailAnalysis.wantsReceived)) {
+          fetchPromises.push(fetchRecentEmails({ maxResults: emailAnalysis.count, folder: 'inbox' }));
+          labels.push('Received Emails');
+        }
 
-      const results = await Promise.all(fetchPromises);
-      results.forEach((emails, i) => {
-        extraContext += summarizeEmails(emails, labels[i]) + '\n';
-      });
-    } catch (err) {
-      console.error('[CommandBar] Failed to fetch emails for context:', err);
-      extraContext += 'Gmail error: Could not fetch emails. Token may have expired — user should reconnect Google account in Settings.\n';
+        const results = await Promise.all(fetchPromises);
+        results.forEach((emails, i) => {
+          extraContext += summarizeEmails(emails, labels[i]) + '\n';
+        });
+      } catch (err) {
+        console.error('[CommandBar] Failed to fetch emails for context:', err);
+        extraContext += 'Gmail error: Could not fetch emails. Token may have expired — user should reconnect Google account in Settings.\n';
+      }
+    } else {
+      extraContext += 'Gmail is not connected. The user needs to connect their Google account in Settings > Integrations to enable email access.\n';
     }
-  } else if (emailAnalysis.isEmail && !isGmailConnected()) {
-    extraContext += 'Gmail is not connected. The user needs to connect their Google account in Settings > Integrations to enable email access.\n';
   }
 
   return aiChat(question, {
