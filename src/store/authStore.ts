@@ -32,8 +32,22 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true, error: null });
 
-          // Get current session
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          // Get current session (with retry for Supabase AbortError)
+          let session;
+          let sessionError;
+          for (let attempt = 0; attempt < 3; attempt++) {
+            const result = await supabase.auth.getSession();
+            session = result.data.session;
+            sessionError = result.error;
+            if (!sessionError) break;
+            // Retry on abort errors (known Supabase JS v2 race condition)
+            if (sessionError.message?.includes('abort') || sessionError.name === 'AbortError') {
+              console.warn(`[Auth] getSession aborted (attempt ${attempt + 1}/3), retrying...`);
+              await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+              continue;
+            }
+            break; // Non-abort errors should not retry
+          }
 
           if (sessionError) throw sessionError;
 
