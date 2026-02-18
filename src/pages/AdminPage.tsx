@@ -73,24 +73,31 @@ export default function AdminPage() {
     setInviting(true);
     setError(null);
     setSuccess(null);
+    console.log('[AdminPage] Inviting user:', inviteEmail.trim(), 'with role:', inviteRole);
 
     try {
       // Get current user's JWT for Edge Function auth
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('[AdminPage] getSession error:', sessionError);
+      }
       const accessToken = sessionData?.session?.access_token;
       if (!accessToken) {
+        console.error('[AdminPage] No access token available');
         setError('Not authenticated. Please sign in again.');
         setInviting(false);
         return;
       }
 
+      console.log('[AdminPage] Calling admin-invite Edge Function...');
       // Invite via Edge Function (service role key stays server-side)
-      await adminInviteUser(
+      const result = await adminInviteUser(
         inviteEmail.trim(),
         inviteRole,
         `${window.location.origin}`,
         accessToken
       );
+      console.log('[AdminPage] Invite result:', result);
 
       setSuccess(`Invite sent to ${inviteEmail} with ${inviteRole} role`);
       setInviteEmail('');
@@ -101,6 +108,7 @@ export default function AdminPage() {
       // Refresh user list
       await fetchUsers();
     } catch (err) {
+      console.error('[AdminPage] Invite failed:', err);
       setError(`Invite failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
     setInviting(false);
