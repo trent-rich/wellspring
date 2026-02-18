@@ -1250,26 +1250,6 @@ export default function ChapterDetailModal({
               doeDeadline={stateInfo?.doeDeadline || '2026-04-30'}
             />
 
-            {/* Monday.com Sync */}
-            <div className="mt-4">
-              <MondaySyncPanel
-                reportState={chapterState.reportState}
-                chapterType={chapterState.chapterType}
-                currentStep={chapterState.currentStep}
-                currentOwner={chapterState.currentOwner}
-              />
-            </div>
-
-            {/* Payments Board Sync (for standard workflow with authors) */}
-            {workflowType === 'standard' && (
-              <PaymentsSyncPanel
-                reportState={chapterState.reportState}
-                chapterType={chapterState.chapterType}
-                currentStep={chapterState.currentStep}
-                authorName={chapterState.authorName || undefined}
-              />
-            )}
-
             {/* Workflow Steps */}
             <div className="mt-4">
               <div className="flex items-center justify-between mb-3">
@@ -1294,6 +1274,26 @@ export default function ChapterDetailModal({
                 </p>
               )}
             </div>
+
+            {/* Monday.com Sync */}
+            <div className="mt-4">
+              <MondaySyncPanel
+                reportState={chapterState.reportState}
+                chapterType={chapterState.chapterType}
+                currentStep={chapterState.currentStep}
+                currentOwner={chapterState.currentOwner}
+              />
+            </div>
+
+            {/* Payments Board Sync (for standard workflow with authors) */}
+            {workflowType === 'standard' && (
+              <PaymentsSyncPanel
+                reportState={chapterState.reportState}
+                chapterType={chapterState.chapterType}
+                currentStep={chapterState.currentStep}
+                authorName={chapterState.authorName || undefined}
+              />
+            )}
           </div>
 
           {/* Footer */}
