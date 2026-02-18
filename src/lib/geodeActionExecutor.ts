@@ -556,20 +556,14 @@ async function executeSendOutreachEmail(
 
 /**
  * Execute: generate_contract
- * Creates a draft email to Dani with contract details
+ * Generates a DOCX contract for the Author Agreement workflow.
+ * Stores the generated contract in lastGeneratedContract so the
+ * subsequent send_contract step can attach it to Dani's email.
  */
 async function executeGenerateContract(
   action: GeodeSuggestedAction,
   task: GeodeConfirmationTask
 ): Promise<ActionExecutionResult> {
-  if (!isGmailConnected()) {
-    return {
-      actionId: action.id,
-      success: false,
-      message: 'Gmail is not connected. Please connect your Google account in Settings.',
-    };
-  }
-
   const stateInfo = task.state ? GEODE_STATES.find(s => s.value === task.state) : null;
   const chapterInfo = task.chapterType ? GEODE_CHAPTER_TYPES.find(c => c.value === task.chapterType) : null;
 
@@ -581,23 +575,69 @@ async function executeGenerateContract(
     };
   }
 
-  // Use author info if available, otherwise use placeholder from task title
   const authorName = task.authorName || 'Author TBD';
+  const authorEmail = task.authorEmail || 'author@tbd.com';
 
-  // For now, just note that this would generate the contract
-  // The actual PDF generation would require a template system
+  console.log('[ActionExecutor] Generating agreement contract for:', {
+    authorName,
+    authorEmail,
+    state: stateInfo.label,
+    chapter: chapterInfo.label,
+  });
+
+  // Generate the contract DOCX and upload to Google Drive
+  const contract = await generateAndUploadContract({
+    contractorName: authorName,
+    contractorEmail: authorEmail,
+    state: task.state!,
+    chapterType: task.chapterType!,
+    chapterName: chapterInfo.label,
+    chapterNum: chapterInfo.chapterNum,
+    paymentAmount: task.paymentAmount,
+  });
+
+  if (!contract) {
+    return {
+      actionId: action.id,
+      success: false,
+      message: `Failed to generate contract for ${authorName}. Check console for details.`,
+    };
+  }
+
+  // Store for the send_contract step to pick up as attachment
+  lastGeneratedContract = contract;
+
+  const driveInfo = contract.driveWebViewLink
+    ? ` Uploaded to Google Drive: ${contract.driveWebViewLink}`
+    : ' (Drive upload failed — will attach directly to email)';
+
   return {
     actionId: action.id,
     success: true,
-    message: `Contract generation noted for ${authorName} (${stateInfo.abbreviation} ${chapterInfo.label}). PDF generation pending implementation.`,
+    message: `Contract generated: ${contract.filename} (${contract.timeline.timelineType} timeline, ${contract.timeline.bufferDays} days buffer before DOE deadline).${driveInfo}`,
     artifacts: [
       {
         type: 'log_entry',
         details: {
-          action: 'contract_generation_requested',
-          authorName: task.authorName,
+          action: 'agreement_contract_generation',
+          authorName,
+          authorEmail,
           state: stateInfo.value,
+          stateAbbrev: stateInfo.abbreviation,
           chapter: chapterInfo.value,
+          chapterNum: chapterInfo.chapterNum,
+          chapterTitle: chapterInfo.label,
+          filename: contract.filename,
+          driveFileId: contract.driveFileId,
+          driveWebViewLink: contract.driveWebViewLink,
+          timelineType: contract.timeline.timelineType,
+          expertQDate: contract.timeline.expertQDate,
+          firstDraftDate: contract.timeline.firstDraftDate,
+          reviewReturnDate: contract.timeline.reviewReturnDate,
+          grammarProofDate: contract.timeline.grammarProofDate,
+          finalApprovalDate: contract.timeline.finalApprovalDate,
+          doeDeadline: contract.timeline.doeDeadline,
+          bufferDays: contract.timeline.bufferDays,
         },
       },
     ],
@@ -660,21 +700,36 @@ async function executeSendContract(
   let attachment: { filename: string; mimeType: string; content: string } | undefined;
   let attachmentSource = '';
 
-  // PRIORITY 1: Search Supabase Storage for contract file
-  console.log('[ActionExecutor] Searching for contract in Google Drive...');
-  const storageContract = await findContractInDrive(
-    stateInfo.abbreviation,
-    authorName,
-    chapterInfo.label
-  );
-
-  if (storageContract) {
-    attachment = storageContract;
-    attachmentSource = 'Google Drive';
-    console.log('[ActionExecutor] Found contract in storage:', storageContract.filename);
+  // PRIORITY 1: Use the contract generated in the previous step (generate_contract or generate_outreach_contract)
+  if (lastGeneratedContract) {
+    console.log('[ActionExecutor] Using freshly generated contract:', lastGeneratedContract.filename);
+    attachment = {
+      filename: lastGeneratedContract.filename,
+      mimeType: lastGeneratedContract.mimeType,
+      content: lastGeneratedContract.base64,
+    };
+    attachmentSource = 'generated';
+    // Clear after use
+    lastGeneratedContract = null;
   }
 
-  // PRIORITY 2: Check if task has a stored contract attachment reference (from Gmail)
+  // PRIORITY 2: Search Google Drive for existing contract
+  if (!attachment) {
+    console.log('[ActionExecutor] Searching for contract in Google Drive...');
+    const storageContract = await findContractInDrive(
+      stateInfo.abbreviation,
+      authorName,
+      chapterInfo.label
+    );
+
+    if (storageContract) {
+      attachment = storageContract;
+      attachmentSource = 'Google Drive';
+      console.log('[ActionExecutor] Found contract in Drive:', storageContract.filename);
+    }
+  }
+
+  // PRIORITY 3: Check if task has a stored contract attachment reference (from Gmail)
   if (!attachment && task.contractAttachment) {
     console.log('[ActionExecutor] Trying stored contract attachment reference:', task.contractAttachment);
     try {
@@ -694,7 +749,7 @@ async function executeSendContract(
     }
   }
 
-  // PRIORITY 3: Search Gmail for contract attachment (fallback)
+  // PRIORITY 4: Search Gmail for contract attachment (fallback)
   if (!attachment) {
     console.log('[ActionExecutor] Searching Gmail for contract attachment...');
 
