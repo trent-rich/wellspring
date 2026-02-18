@@ -1219,24 +1219,6 @@ export default function ChapterDetailModal({
               </a>
             )}
 
-            {/* Monday.com Sync */}
-            <MondaySyncPanel
-              reportState={chapterState.reportState}
-              chapterType={chapterState.chapterType}
-              currentStep={chapterState.currentStep}
-              currentOwner={chapterState.currentOwner}
-            />
-
-            {/* Payments Board Sync (for standard workflow with authors) */}
-            {workflowType === 'standard' && (
-              <PaymentsSyncPanel
-                reportState={chapterState.reportState}
-                chapterType={chapterState.chapterType}
-                currentStep={chapterState.currentStep}
-                authorName={chapterState.authorName || undefined}
-              />
-            )}
-
             {/* Blockers */}
             {chapterState.blockers && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
@@ -1267,6 +1249,26 @@ export default function ChapterDetailModal({
               contractDeadlines={chapterState.contractDeadlines}
               doeDeadline={stateInfo?.doeDeadline || '2026-04-30'}
             />
+
+            {/* Monday.com Sync */}
+            <div className="mt-4">
+              <MondaySyncPanel
+                reportState={chapterState.reportState}
+                chapterType={chapterState.chapterType}
+                currentStep={chapterState.currentStep}
+                currentOwner={chapterState.currentOwner}
+              />
+            </div>
+
+            {/* Payments Board Sync (for standard workflow with authors) */}
+            {workflowType === 'standard' && (
+              <PaymentsSyncPanel
+                reportState={chapterState.reportState}
+                chapterType={chapterState.chapterType}
+                currentStep={chapterState.currentStep}
+                authorName={chapterState.authorName || undefined}
+              />
+            )}
 
             {/* Workflow Steps */}
             <div className="mt-4">
