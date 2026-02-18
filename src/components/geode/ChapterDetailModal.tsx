@@ -14,6 +14,9 @@ import {
   Edit3,
   Link2,
   RefreshCw,
+  Play,
+  Loader2,
+  FileSignature,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import {
@@ -31,6 +34,14 @@ import { GEODE_CHAPTER_TYPES, GEODE_STATES, type GeodeState } from '../../types/
 import AIActionPanel, { type ActionSubmission } from './AIActionPanel';
 import { useGeodeChapterStore } from '../../store/geodeChapterStore';
 import { getIntegrationStatus } from '../../lib/integrations';
+import {
+  AUTHOR_AGREEMENT_ACTIONS,
+  AUTHOR_OUTREACH_ACTIONS,
+  CONTRACT_SIGNED_ACTIONS,
+  type GeodeConfirmationTask,
+  type GeodeWorkflowType,
+} from '../../types/geodeEmailEvents';
+import { executeTaskActions, type TaskExecutionResult } from '../../lib/geodeActionExecutor';
 
 // ============================================
 // TYPES
@@ -382,6 +393,314 @@ function PaymentsSyncPanel({ reportState, chapterType, currentStep, authorName }
       <p className="text-xs text-emerald-500 mt-2">
         Payment milestones sync when contract/author steps are reached.
       </p>
+    </div>
+  );
+}
+
+// ============================================
+// DIRECT WORKFLOW EXECUTION PANEL
+// ============================================
+
+interface DirectWorkflowPanelProps {
+  chapterState: ChapterWorkflowState;
+  onStepUpdated?: () => void;
+}
+
+function DirectWorkflowPanel({ chapterState, onStepUpdated }: DirectWorkflowPanelProps) {
+  const { setAuthorInfo, updateChapterStep } = useGeodeChapterStore();
+
+  const [authorName, setAuthorName] = useState(chapterState.authorName || '');
+  const [authorEmail, setAuthorEmail] = useState(chapterState.authorEmail || '');
+  const [selectedWorkflow, setSelectedWorkflow] = useState<GeodeWorkflowType>('author_agreement');
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executionResult, setExecutionResult] = useState<TaskExecutionResult | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const stateInfo = GEODE_STATES.find(s => s.value === chapterState.reportState);
+  const chapterInfo = GEODE_CHAPTER_TYPES.find(c => c.value === chapterState.chapterType);
+
+  // Determine which workflows make sense based on current step
+  const earlySteps = ['not_started', 'outreach_identify_authors', 'schedule_meeting', 'explain_project'];
+  const agreementSteps = ['author_outreach', 'author_agreed', 'send_contract', 'awaiting_contract_signature'];
+  const postSignSteps = ['contract_signed', 'awaiting_author_responses'];
+
+  const isEarlyPhase = earlySteps.includes(chapterState.currentStep);
+  const isAgreementPhase = agreementSteps.includes(chapterState.currentStep);
+  const isPostSignPhase = postSignSteps.includes(chapterState.currentStep);
+
+  const getWorkflowActions = (wf: GeodeWorkflowType) => {
+    switch (wf) {
+      case 'author_outreach': return AUTHOR_OUTREACH_ACTIONS;
+      case 'author_agreement': return AUTHOR_AGREEMENT_ACTIONS;
+      case 'contract_signed': return CONTRACT_SIGNED_ACTIONS;
+    }
+  };
+
+  const getWorkflowLabel = (wf: GeodeWorkflowType) => {
+    switch (wf) {
+      case 'author_outreach': return 'Author Outreach';
+      case 'author_agreement': return 'Author Agreement';
+      case 'contract_signed': return 'Contract Signed';
+    }
+  };
+
+  const getWorkflowDescription = (wf: GeodeWorkflowType) => {
+    switch (wf) {
+      case 'author_outreach':
+        return 'Generate contract → Send outreach email to author → Add to Monday.com Payments → Advance step';
+      case 'author_agreement':
+        return 'Generate contract → Send to Dani for e-signature (CC Karine) → Advance to "Send Contract" → Log author info';
+      case 'contract_signed':
+        return 'Notify Accounting → Upload contract to Monday.com → Advance step → Send welcome email';
+    }
+  };
+
+  const handleExecute = async () => {
+    if (!authorName.trim() || !authorEmail.trim()) return;
+
+    setIsExecuting(true);
+    setExecutionResult(null);
+
+    // Build a GeodeConfirmationTask from the form data
+    const task: GeodeConfirmationTask = {
+      id: `manual_${Date.now()}`,
+      emailEventId: 'manual_entry',
+      title: `${authorName} — ${stateInfo?.label} ${chapterInfo?.label}`,
+      description: `Manual ${getWorkflowLabel(selectedWorkflow)} workflow execution`,
+      category: selectedWorkflow === 'contract_signed' ? 'contract' : 'author_onboarding',
+      priority: 'high',
+      state: chapterState.reportState as GeodeState,
+      chapterType: chapterState.chapterType as any,
+      authorName: authorName.trim(),
+      authorEmail: authorEmail.trim(),
+      pendingActions: getWorkflowActions(selectedWorkflow),
+      status: 'confirmed',
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      const result = await executeTaskActions(task);
+      setExecutionResult(result);
+
+      // If successful, also update the chapter store with author info
+      if (result.success || result.results.some(r => r.success)) {
+        // Save author info to the chapter
+        setAuthorInfo(
+          chapterState.reportState as GeodeState,
+          chapterState.chapterType,
+          authorName.trim(),
+          authorEmail.trim(),
+          selectedWorkflow === 'contract_signed', // contractSigned
+          selectedWorkflow === 'contract_signed' ? new Date().toISOString().split('T')[0] : undefined
+        );
+
+        // Find the advance_step action result and update the chapter step
+        const advanceResult = result.results.find(
+          r => r.success && r.artifacts?.some(a => a.type === 'status_update')
+        );
+        if (advanceResult) {
+          const statusArtifact = advanceResult.artifacts?.find(a => a.type === 'status_update');
+          const newStep = statusArtifact?.details?.newStep as string;
+          if (newStep) {
+            updateChapterStep(
+              chapterState.reportState as GeodeState,
+              chapterState.chapterType,
+              newStep,
+              authorName.trim(),
+              `${getWorkflowLabel(selectedWorkflow)} workflow executed manually`
+            );
+          }
+        }
+
+        onStepUpdated?.();
+      }
+    } catch (error) {
+      console.error('[DirectWorkflowPanel] Execution error:', error);
+      setExecutionResult({
+        taskId: task.id,
+        success: false,
+        results: [],
+        summary: `Execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
+  const actions = getWorkflowActions(selectedWorkflow);
+
+  return (
+    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between"
+      >
+        <div className="flex items-center space-x-2">
+          <FileSignature className="w-4 h-4 text-indigo-600" />
+          <h4 className="font-medium text-indigo-800">Execute Workflow</h4>
+        </div>
+        <ChevronRight className={cn(
+          'w-4 h-4 text-indigo-400 transition-transform',
+          isExpanded && 'rotate-90'
+        )} />
+      </button>
+
+      {isExpanded && (
+        <div className="mt-4 space-y-4">
+          {/* Workflow selector */}
+          <div>
+            <label className="block text-sm font-medium text-indigo-700 mb-1">Workflow Type</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['author_outreach', 'author_agreement', 'contract_signed'] as GeodeWorkflowType[]).map(wf => (
+                <button
+                  key={wf}
+                  onClick={() => setSelectedWorkflow(wf)}
+                  className={cn(
+                    'px-3 py-2 text-xs font-medium rounded-lg border transition-colors text-center',
+                    selectedWorkflow === wf
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-indigo-700 border-indigo-300 hover:bg-indigo-100',
+                    // Highlight recommended based on current step
+                    wf === 'author_outreach' && isEarlyPhase && selectedWorkflow !== wf && 'ring-2 ring-indigo-300',
+                    wf === 'author_agreement' && isAgreementPhase && selectedWorkflow !== wf && 'ring-2 ring-indigo-300',
+                    wf === 'contract_signed' && isPostSignPhase && selectedWorkflow !== wf && 'ring-2 ring-indigo-300',
+                  )}
+                >
+                  {getWorkflowLabel(wf)}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-indigo-500 mt-1">
+              {getWorkflowDescription(selectedWorkflow)}
+            </p>
+          </div>
+
+          {/* Author fields */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-indigo-700 mb-1">
+                Author Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={authorName}
+                onChange={(e) => setAuthorName(e.target.value)}
+                placeholder="e.g., Dr. Jane Smith"
+                className="w-full px-3 py-2 text-sm border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-indigo-700 mb-1">
+                Author Email <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                value={authorEmail}
+                onChange={(e) => setAuthorEmail(e.target.value)}
+                placeholder="e.g., jane@university.edu"
+                className="w-full px-3 py-2 text-sm border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+
+          {/* Actions preview */}
+          <div className="bg-white rounded-lg border border-indigo-100 p-3">
+            <h5 className="text-xs font-medium text-indigo-600 mb-2">
+              Actions that will execute ({actions.length}):
+            </h5>
+            <div className="space-y-1">
+              {actions.map((action, idx) => (
+                <div key={action.id} className="flex items-center space-x-2 text-xs text-gray-600">
+                  <span className="text-indigo-400 font-mono">{idx + 1}.</span>
+                  <span>{action.title}</span>
+                  {action.requiresConfirmation && (
+                    <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px]">
+                      creates draft
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Execution result */}
+          {executionResult && (
+            <div className={cn(
+              'rounded-lg p-3 text-sm',
+              executionResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+            )}>
+              <div className="flex items-center space-x-2 mb-2">
+                {executionResult.success ? (
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                )}
+                <span className={cn(
+                  'font-medium',
+                  executionResult.success ? 'text-green-800' : 'text-red-800'
+                )}>
+                  {executionResult.summary}
+                </span>
+              </div>
+              <div className="space-y-1">
+                {executionResult.results.map(r => (
+                  <div key={r.actionId} className="flex items-center space-x-2 text-xs">
+                    {r.success ? (
+                      <CheckCircle className="w-3 h-3 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="w-3 h-3 text-red-500" />
+                    )}
+                    <span className={r.success ? 'text-green-700' : 'text-red-700'}>
+                      {r.message}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {/* Draft link */}
+              {executionResult.results.some(r => r.artifacts?.some(a => a.type === 'draft')) && (
+                <a
+                  href="https://mail.google.com/mail/u/0/#drafts"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-1 mt-2 text-xs text-blue-600 hover:text-blue-700"
+                >
+                  <Mail className="w-3 h-3" />
+                  <span>Open Gmail Drafts</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Execute button */}
+          <button
+            onClick={handleExecute}
+            disabled={isExecuting || !authorName.trim() || !authorEmail.trim()}
+            className={cn(
+              'w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg font-medium text-sm transition-colors',
+              isExecuting || !authorName.trim() || !authorEmail.trim()
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+            )}
+          >
+            {isExecuting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Executing {getWorkflowLabel(selectedWorkflow)}...</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4" />
+                <span>Execute {getWorkflowLabel(selectedWorkflow)} Workflow</span>
+              </>
+            )}
+          </button>
+
+          <p className="text-xs text-indigo-400 text-center">
+            Email actions create Gmail drafts — review before sending.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -865,6 +1184,25 @@ export default function ChapterDetailModal({
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Direct Workflow Execution (for standard workflow) */}
+            {workflowType === 'standard' && chapterState.currentStep !== 'done' && (
+              <DirectWorkflowPanel
+                chapterState={chapterState}
+                onStepUpdated={() => {
+                  // Refresh the chapter state from store
+                  const store = useGeodeChapterStore.getState();
+                  const updated = store.getChapter(
+                    chapterState.reportState as GeodeState,
+                    chapterState.chapterType
+                  );
+                  if (updated) {
+                    // The parent modal will re-render with the updated state
+                    // since ChapterDetailModal receives chapterState as prop
+                  }
+                }}
+              />
             )}
 
             {/* Google Doc link */}
