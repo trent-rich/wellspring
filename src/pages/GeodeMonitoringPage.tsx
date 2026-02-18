@@ -25,7 +25,6 @@ import {
   GEODE_STATES,
   GEODE_CHAPTER_TYPES,
   GEODE_GOOGLE_DRIVE_FOLDER,
-  type GeodeContentSection,
 } from '../types/geode';
 import {
   getStepMeta,
