@@ -218,6 +218,13 @@ const CHAPTER_SCOPE_DEFAULTS: Record<string, (stateName: string) => string> = {
     `cover environmental impacts, mitigation strategies, permitting requirements, and the overall environmental ` +
     `benefits of geothermal compared to other energy sources.`,
 
+  ch7_1_entrepreneurship: (state) =>
+    `Entrepreneurship section:\n` +
+    `This chapter explores the entrepreneurial opportunities and innovation ecosystem surrounding geothermal ` +
+    `energy development in ${state}. It should cover startup activity, venture capital interest, technology ` +
+    `transfer from oil and gas, workforce development pathways, and the role of incubators, accelerators, ` +
+    `and university programs in fostering geothermal entrepreneurship.`,
+
   ch9_military: (state) =>
     `Military Installations section:\n` +
     `This chapter assesses the potential for geothermal energy at military installations in ${state}. It should ` +

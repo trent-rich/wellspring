@@ -29,6 +29,7 @@ export type GeodeContentSection =
   | 'ch5_heat_ownership'   // Heat Ownership
   | 'ch6_policy'           // Policy
   | 'ch7_stakeholders'     // Stakeholders
+  | 'ch7_1_entrepreneurship' // Entrepreneurship (OK-specific)
   | 'ch8_environment'      // Environment
   | 'ch9_military'         // Military Installations (may vary by state)
   | 'executive_summary'    // Executive Summary (if separate)
@@ -643,6 +644,8 @@ export const GEODE_STATES: { value: GeodeState; label: string; abbreviation: str
 export const GEODE_FINAL_DEADLINE = new Date('2026-04-30');
 
 // Chapter types based on Arizona report structure
+// Master list of ALL possible chapter types across all states.
+// Not every state uses every chapter — see DEFAULT_STATE_CHAPTERS for per-state config.
 export const GEODE_CHAPTER_TYPES: { value: GeodeContentSection; label: string; chapterNum: string }[] = [
   { value: 'ch1_101', label: 'The 101', chapterNum: '1' },
   { value: 'ch2_subsurface', label: 'Subsurface', chapterNum: '2' },
@@ -652,9 +655,31 @@ export const GEODE_CHAPTER_TYPES: { value: GeodeContentSection; label: string; c
   { value: 'ch5_heat_ownership', label: 'Heat Ownership', chapterNum: '5' },
   { value: 'ch6_policy', label: 'Policy', chapterNum: '6' },
   { value: 'ch7_stakeholders', label: 'Stakeholders', chapterNum: '7' },
+  { value: 'ch7_1_entrepreneurship', label: 'Entrepreneurship', chapterNum: '7.1' },
   { value: 'ch8_environment', label: 'Environment', chapterNum: '8' },
   { value: 'ch9_military', label: 'Military Installations', chapterNum: '9' },
 ];
+
+// Default chapter list per state. States can add/remove chapters via the store.
+// This defines the initial set — the store persists any modifications.
+const STANDARD_CHAPTERS: GeodeContentSection[] = [
+  'ch1_101', 'ch2_subsurface', 'ch3_electricity', 'ch4_direct_use',
+  'ch4_5_commercial_gshp', 'ch5_heat_ownership', 'ch6_policy',
+  'ch7_stakeholders', 'ch8_environment', 'ch9_military',
+];
+
+export const DEFAULT_STATE_CHAPTERS: Record<GeodeState, GeodeContentSection[]> = {
+  arizona: STANDARD_CHAPTERS,
+  louisiana: STANDARD_CHAPTERS,
+  oklahoma: [
+    'ch1_101', 'ch2_subsurface', 'ch3_electricity', 'ch4_direct_use',
+    'ch5_heat_ownership', 'ch6_policy',
+    'ch7_stakeholders', 'ch7_1_entrepreneurship', 'ch8_environment', 'ch9_military',
+  ],
+  alaska: STANDARD_CHAPTERS,
+  idaho: STANDARD_CHAPTERS,
+  oregon: STANDARD_CHAPTERS,
+};
 
 // Legacy alias for backwards compatibility
 export const GEODE_SECTION_TYPES = GEODE_CHAPTER_TYPES;
@@ -736,6 +761,7 @@ export const GEODE_CHAPTER_LEADS: Record<GeodeState, Record<string, string>> = {
     ch5_heat_ownership: 'Smita/Maria',
     ch6_policy: 'Trent',
     ch7_stakeholders: 'Jackson',
+    ch7_1_entrepreneurship: 'Trent',
     ch8_environment: 'Smita',
     ch9_military: 'Ryan',
   },

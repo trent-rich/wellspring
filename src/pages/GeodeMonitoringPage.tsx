@@ -15,6 +15,9 @@ import {
   AlertTriangle,
   Edit3,
   Calendar,
+  Plus,
+  Trash2,
+  Settings,
 } from 'lucide-react';
 import { useGeodeChapterStore, useTrentChapters, useOverdueChapters } from '../store/geodeChapterStore';
 import type { GeodeState } from '../types/geode';
@@ -22,6 +25,7 @@ import {
   GEODE_STATES,
   GEODE_CHAPTER_TYPES,
   GEODE_GOOGLE_DRIVE_FOLDER,
+  type GeodeContentSection,
 } from '../types/geode';
 import {
   getStepMeta,
@@ -298,6 +302,7 @@ export default function GeodeMonitoringPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeState, setActiveState] = useState<GeodeState>('arizona');
   const [selectedChapter, setSelectedChapter] = useState<ChapterWorkflowState | null>(null);
+  const [showManageChapters, setShowManageChapters] = useState(false);
 
   const {
     chapters,
@@ -305,6 +310,9 @@ export default function GeodeMonitoringPage() {
     getChaptersForState,
     setDoeDeadline,
     initializeChapters,
+    addChapterToState,
+    removeChapterFromState,
+    getStateChapterTypes,
   } = useGeodeChapterStore();
 
   const trentChapters = useTrentChapters();
@@ -484,21 +492,95 @@ export default function GeodeMonitoringPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-sm font-medium text-gray-700">Chapters</h3>
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <span className="flex items-center space-x-1">
-                  <Clock className="w-3 h-3" />
-                  <span>= Days on step</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <MessageSquare className="w-3 h-3 text-purple-500" />
-                  <span>= Slack</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <Mail className="w-3 h-3 text-blue-500" />
-                  <span>= Email</span>
-                </span>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowManageChapters(!showManageChapters)}
+                  className={cn(
+                    'flex items-center space-x-1 text-xs px-2 py-1 rounded-lg transition-colors',
+                    showManageChapters
+                      ? 'bg-indigo-100 text-indigo-700'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                  )}
+                >
+                  <Settings className="w-3 h-3" />
+                  <span>Manage</span>
+                </button>
+                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                  <span className="flex items-center space-x-1">
+                    <Clock className="w-3 h-3" />
+                    <span>= Days on step</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <MessageSquare className="w-3 h-3 text-purple-500" />
+                    <span>= Slack</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <Mail className="w-3 h-3 text-blue-500" />
+                    <span>= Email</span>
+                  </span>
+                </div>
               </div>
             </div>
+
+            {/* Manage Chapters Panel */}
+            {showManageChapters && (
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium text-indigo-800">
+                    Manage Chapters — {GEODE_STATES.find(s => s.value === activeState)?.label}
+                  </h4>
+                </div>
+                <div className="space-y-1">
+                  {GEODE_CHAPTER_TYPES.map(chType => {
+                    const enabledList = getStateChapterTypes(activeState);
+                    const isEnabled = enabledList.includes(chType.value);
+                    return (
+                      <div
+                        key={chType.value}
+                        className={cn(
+                          'flex items-center justify-between px-3 py-2 rounded-lg text-sm',
+                          isEnabled ? 'bg-white' : 'bg-indigo-100/50 opacity-60'
+                        )}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-mono text-gray-400 w-8">
+                            {chType.chapterNum}
+                          </span>
+                          <span className={isEnabled ? 'text-gray-900' : 'text-gray-500'}>
+                            {chType.label}
+                          </span>
+                        </div>
+                        {isEnabled ? (
+                          <button
+                            onClick={() => {
+                              if (confirm(`Remove Ch ${chType.chapterNum}: ${chType.label} from ${GEODE_STATES.find(s => s.value === activeState)?.label}?`)) {
+                                removeChapterFromState(activeState, chType.value);
+                              }
+                            }}
+                            className="flex items-center space-x-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Remove</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => addChapterToState(activeState, chType.value)}
+                            className="flex items-center space-x-1 px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-100 rounded transition-colors"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>Add</span>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-indigo-400 mt-3">
+                  Changes are saved automatically and persist across sessions.
+                </p>
+              </div>
+            )}
+
             {activeChapters.map((chapter) => (
               <ChapterRow
                 key={chapter.chapterId}

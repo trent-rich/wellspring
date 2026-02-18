@@ -7,7 +7,7 @@ import {
   getStepMeta,
   calculateDaysOnStep,
 } from '../types/geodeWorkflow';
-import { GEODE_CHAPTER_TYPES, GEODE_STATES, GEODE_CHAPTER_LEADS } from '../types/geode';
+import { GEODE_CHAPTER_TYPES, GEODE_STATES, GEODE_CHAPTER_LEADS, DEFAULT_STATE_CHAPTERS, type GeodeContentSection } from '../types/geode';
 import { addMondayComment, getMondayStatusLabel } from '../lib/geodeMondaySync';
 import {
   syncChapterToPaymentsWithEmail,
@@ -25,6 +25,9 @@ import { createDraftWithAttachment, createDraft, isGmailConnected } from '../lib
 interface GeodeChapterStoreState {
   // All chapter workflow states by composite key: `${state}_${chapterType}`
   chapters: Record<string, ChapterWorkflowState>;
+
+  // Per-state chapter lists (which chapters are enabled for each state)
+  stateChapters: Record<GeodeState, GeodeContentSection[]>;
 
   // Editable DOE deadlines (admin only)
   doeDeadlines: Record<GeodeState, string>;
@@ -65,6 +68,11 @@ interface GeodeChapterStoreState {
     email: PaymentEmailResult | null;
   }>;
   initializeChapters: () => void;
+
+  // Chapter management
+  addChapterToState: (state: GeodeState, chapterType: GeodeContentSection) => void;
+  removeChapterFromState: (state: GeodeState, chapterType: GeodeContentSection) => void;
+  getStateChapterTypes: (state: GeodeState) => GeodeContentSection[];
 
   // Queries
   getChaptersForState: (state: GeodeState) => ChapterWorkflowState[];
@@ -319,6 +327,7 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
   persist(
     (set, get) => ({
       chapters: {},
+      stateChapters: { ...DEFAULT_STATE_CHAPTERS },
       doeDeadlines: DEFAULT_DOE_DEADLINES,
       mondayItemIds: {},
       paymentContributorIds: {},
@@ -634,9 +643,14 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
       initializeChapters: () => {
         const chapters: Record<string, ChapterWorkflowState> = {};
         const arizonaOverrides = getArizonaChapterOverrides();
+        const currentStateChapters = get().stateChapters;
 
         for (const state of GEODE_STATES) {
-          for (const chapter of GEODE_CHAPTER_TYPES) {
+          // Use per-state chapter list (falls back to default if not yet set)
+          const enabledChapters = currentStateChapters[state.value as GeodeState] || DEFAULT_STATE_CHAPTERS[state.value as GeodeState];
+          const chapterTypes = GEODE_CHAPTER_TYPES.filter(c => enabledChapters.includes(c.value));
+
+          for (const chapter of chapterTypes) {
             const key = `${state.value}_${chapter.value}`;
             const initialState = createInitialChapterState(state.value, chapter.value);
 
@@ -656,9 +670,52 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
         set({ chapters });
       },
 
+      addChapterToState: (state, chapterType) => {
+        const current = get().stateChapters[state] || DEFAULT_STATE_CHAPTERS[state];
+        if (current.includes(chapterType)) return; // Already exists
+
+        // Insert in chapter number order based on GEODE_CHAPTER_TYPES
+        const masterOrder = GEODE_CHAPTER_TYPES.map(c => c.value);
+        const updated = [...current, chapterType].sort(
+          (a, b) => masterOrder.indexOf(a) - masterOrder.indexOf(b)
+        );
+
+        // Create the chapter workflow state entry
+        const key = `${state}_${chapterType}`;
+        const initialState = createInitialChapterState(state, chapterType);
+
+        set((s) => ({
+          stateChapters: { ...s.stateChapters, [state]: updated },
+          chapters: { ...s.chapters, [key]: initialState },
+        }));
+      },
+
+      removeChapterFromState: (state, chapterType) => {
+        const current = get().stateChapters[state] || DEFAULT_STATE_CHAPTERS[state];
+        if (!current.includes(chapterType)) return; // Doesn't exist
+
+        const updated = current.filter(c => c !== chapterType);
+        const key = `${state}_${chapterType}`;
+
+        // Remove the chapter from the chapters record
+        const { [key]: _removed, ...remainingChapters } = get().chapters;
+
+        set((s) => ({
+          stateChapters: { ...s.stateChapters, [state]: updated },
+          chapters: remainingChapters,
+        }));
+      },
+
+      getStateChapterTypes: (state) => {
+        return get().stateChapters[state] || DEFAULT_STATE_CHAPTERS[state];
+      },
+
       getChaptersForState: (state) => {
         const allChapters = get().chapters;
-        return Object.values(allChapters).filter(c => c.reportState === state);
+        const enabledChapters = get().stateChapters[state] || DEFAULT_STATE_CHAPTERS[state];
+        // Return only chapters that are in the enabled list for this state
+        return Object.values(allChapters)
+          .filter(c => c.reportState === state && enabledChapters.includes(c.chapterType as GeodeContentSection));
       },
 
       getChaptersByOwner: (ownerName) => {
