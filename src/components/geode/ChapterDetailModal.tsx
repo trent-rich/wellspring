@@ -30,7 +30,7 @@ import {
   type ChapterWorkflowState,
   type WorkflowHistoryEntry,
 } from '../../types/geodeWorkflow';
-import { GEODE_CHAPTER_TYPES, GEODE_STATES, type GeodeState } from '../../types/geode';
+import { GEODE_STATES, getChapterTypeInfo, type GeodeState } from '../../types/geode';
 import AIActionPanel, { type ActionSubmission } from './AIActionPanel';
 import { useGeodeChapterStore } from '../../store/geodeChapterStore';
 import { getIntegrationStatus } from '../../lib/integrations';
@@ -416,8 +416,9 @@ function DirectWorkflowPanel({ chapterState, onStepUpdated }: DirectWorkflowPane
   const [executionResult, setExecutionResult] = useState<TaskExecutionResult | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const customChapterTypes = useGeodeChapterStore(s => s.customChapterTypes);
   const stateInfo = GEODE_STATES.find(s => s.value === chapterState.reportState);
-  const chapterInfo = GEODE_CHAPTER_TYPES.find(c => c.value === chapterState.chapterType);
+  const chapterInfo = getChapterTypeInfo(chapterState.chapterType, customChapterTypes);
 
   // Determine which workflows make sense based on current step
   const earlySteps = ['not_started', 'outreach_identify_authors', 'schedule_meeting', 'explain_project'];
@@ -1004,6 +1005,7 @@ export default function ChapterDetailModal({
   onActionSubmit,
 }: ChapterDetailModalProps) {
   const [showAllSteps, setShowAllSteps] = useState(false);
+  const customChapterTypesForModal = useGeodeChapterStore(s => s.customChapterTypes);
 
   if (!isOpen) return null;
 
@@ -1024,7 +1026,7 @@ export default function ChapterDetailModal({
     }
   };
 
-  const chapterInfo = GEODE_CHAPTER_TYPES.find(c => c.value === chapterState.chapterType);
+  const chapterInfo = getChapterTypeInfo(chapterState.chapterType, customChapterTypesForModal);
   const stateInfo = GEODE_STATES.find(s => s.value === chapterState.reportState);
   const workflow = getWorkflowForChapter(chapterState.chapterType);
   const workflowType = getWorkflowType(chapterState.chapterType);

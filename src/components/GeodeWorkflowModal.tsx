@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { X, Play, Users, FileSignature } from 'lucide-react';
-import { GEODE_STATES, GEODE_CHAPTER_TYPES } from '../types/geode';
+import { GEODE_STATES, getAllChapterTypes, getChapterTypeInfo } from '../types/geode';
 import type { GeodeState, GeodeContentSection } from '../types/geode';
+import { useGeodeChapterStore } from '../store/geodeChapterStore';
 import type { TaskWithRelations } from '../types';
 import {
   AUTHOR_OUTREACH_ACTIONS,
@@ -60,6 +61,8 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
   const { addEmailEvent, confirmTask } = useGeodeEmailStore();
   const { completeTask } = useTaskStore();
   const { addJob, updateJob } = useExecutionStore();
+  const customChapterTypes = useGeodeChapterStore(s => s.customChapterTypes);
+  const allChapterTypes = getAllChapterTypes(customChapterTypes);
 
   // Infer the workflow type from task context
   const inferredWorkflow = useMemo(() => {
@@ -116,7 +119,7 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
     const execAuthorEmail = authorEmail;
     const execPaymentAmount = paymentAmount;
     const stateLabel = GEODE_STATES.find(s => s.value === execState)?.abbreviation || execState;
-    const chapterLabel = GEODE_CHAPTER_TYPES.find(c => c.value === execChapter)?.label || execChapter;
+    const chapterLabel = getChapterTypeInfo(execChapter, customChapterTypes)?.label || execChapter;
     const workflowInfo = WORKFLOW_INFO[execWorkflow];
 
     // Create a background execution job
@@ -388,7 +391,7 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
                 State: <span className="font-medium">{GEODE_STATES.find(s => s.value === selectedState)?.label}</span>
               </p>
               <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
-                {GEODE_CHAPTER_TYPES.map(chapter => (
+                {allChapterTypes.map(chapter => (
                   <button
                     key={chapter.value}
                     onClick={() => handleChapterSelect(chapter.value)}
@@ -418,7 +421,7 @@ export default function GeodeWorkflowModal({ task, onClose, onComplete }: GeodeW
                 {currentWorkflowInfo && <><span className="font-medium">{currentWorkflowInfo.title}</span> • </>}
                 State: <span className="font-medium">{GEODE_STATES.find(s => s.value === selectedState)?.label}</span>
                 {' • '}
-                Chapter: <span className="font-medium">{GEODE_CHAPTER_TYPES.find(c => c.value === selectedChapter)?.label}</span>
+                Chapter: <span className="font-medium">{getChapterTypeInfo(selectedChapter || '', customChapterTypes)?.label}</span>
               </p>
 
               {selectedWorkflow === 'author_outreach' && (

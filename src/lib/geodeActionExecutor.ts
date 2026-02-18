@@ -17,7 +17,8 @@ import {
   type DraftEmailOptions,
 } from './gmailService';
 import type { GeodeSuggestedAction, GeodeConfirmationTask } from '../types/geodeEmailEvents';
-import { GEODE_STATES, GEODE_CHAPTER_TYPES } from '../types/geode';
+import { GEODE_STATES, getChapterTypeInfo } from '../types/geode';
+import { useGeodeChapterStore } from '../store/geodeChapterStore';
 import { getGoogleTokenAsync } from './googleCalendar';
 import { generateAndUploadContract, type GeneratedContract } from './contractGenerator';
 
@@ -347,7 +348,7 @@ async function executeGenerateOutreachContract(
   task: GeodeConfirmationTask
 ): Promise<ActionExecutionResult> {
   const stateInfo = task.state ? GEODE_STATES.find(s => s.value === task.state) : null;
-  const chapterInfo = task.chapterType ? GEODE_CHAPTER_TYPES.find(c => c.value === task.chapterType) : null;
+  const chapterInfo = task.chapterType ? getChapterTypeInfo(task.chapterType || '', useGeodeChapterStore.getState().customChapterTypes) : null;
 
   if (!stateInfo || !chapterInfo) {
     return {
@@ -443,7 +444,7 @@ async function executeSendOutreachEmail(
   }
 
   const stateInfo = task.state ? GEODE_STATES.find(s => s.value === task.state) : null;
-  const chapterInfo = task.chapterType ? GEODE_CHAPTER_TYPES.find(c => c.value === task.chapterType) : null;
+  const chapterInfo = task.chapterType ? getChapterTypeInfo(task.chapterType || '', useGeodeChapterStore.getState().customChapterTypes) : null;
 
   if (!stateInfo || !chapterInfo) {
     return {
@@ -565,7 +566,7 @@ async function executeGenerateContract(
   task: GeodeConfirmationTask
 ): Promise<ActionExecutionResult> {
   const stateInfo = task.state ? GEODE_STATES.find(s => s.value === task.state) : null;
-  const chapterInfo = task.chapterType ? GEODE_CHAPTER_TYPES.find(c => c.value === task.chapterType) : null;
+  const chapterInfo = task.chapterType ? getChapterTypeInfo(task.chapterType || '', useGeodeChapterStore.getState().customChapterTypes) : null;
 
   if (!stateInfo || !chapterInfo) {
     return {
@@ -666,7 +667,7 @@ async function executeSendContract(
   }
 
   const stateInfo = task.state ? GEODE_STATES.find(s => s.value === task.state) : null;
-  const chapterInfo = task.chapterType ? GEODE_CHAPTER_TYPES.find(c => c.value === task.chapterType) : null;
+  const chapterInfo = task.chapterType ? getChapterTypeInfo(task.chapterType || '', useGeodeChapterStore.getState().customChapterTypes) : null;
 
   if (!stateInfo || !chapterInfo) {
     return {
@@ -931,7 +932,7 @@ async function executeNotifyAccounting(
   }
 
   const stateInfo = task.state ? GEODE_STATES.find(s => s.value === task.state) : null;
-  const chapterInfo = task.chapterType ? GEODE_CHAPTER_TYPES.find(c => c.value === task.chapterType) : null;
+  const chapterInfo = task.chapterType ? getChapterTypeInfo(task.chapterType || '', useGeodeChapterStore.getState().customChapterTypes) : null;
 
   if (!stateInfo || !chapterInfo || !task.authorName || !task.authorEmail) {
     return {
@@ -997,7 +998,7 @@ async function executeUploadContractMonday(
   task: GeodeConfirmationTask
 ): Promise<ActionExecutionResult> {
   const stateInfo = task.state ? GEODE_STATES.find(s => s.value === task.state) : null;
-  const chapterInfo = task.chapterType ? GEODE_CHAPTER_TYPES.find(c => c.value === task.chapterType) : null;
+  const chapterInfo = task.chapterType ? getChapterTypeInfo(task.chapterType || '', useGeodeChapterStore.getState().customChapterTypes) : null;
 
   if (!stateInfo || !chapterInfo || !task.authorName || !task.authorEmail) {
     return {
@@ -1077,7 +1078,7 @@ async function executeSendWelcomeEmail(
   }
 
   const stateInfo = task.state ? GEODE_STATES.find(s => s.value === task.state) : null;
-  const chapterInfo = task.chapterType ? GEODE_CHAPTER_TYPES.find(c => c.value === task.chapterType) : null;
+  const chapterInfo = task.chapterType ? getChapterTypeInfo(task.chapterType || '', useGeodeChapterStore.getState().customChapterTypes) : null;
 
   if (!stateInfo || !chapterInfo || !task.authorName || !task.authorEmail) {
     return {
@@ -1153,7 +1154,7 @@ async function executeAddToMondayPayments(
   task: GeodeConfirmationTask
 ): Promise<ActionExecutionResult> {
   const stateInfo = task.state ? GEODE_STATES.find(s => s.value === task.state) : null;
-  const chapterInfo = task.chapterType ? GEODE_CHAPTER_TYPES.find(c => c.value === task.chapterType) : null;
+  const chapterInfo = task.chapterType ? getChapterTypeInfo(task.chapterType || '', useGeodeChapterStore.getState().customChapterTypes) : null;
 
   if (!stateInfo || !chapterInfo || !task.authorName || !task.authorEmail) {
     return {

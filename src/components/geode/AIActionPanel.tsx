@@ -25,7 +25,8 @@ import {
   STEP_QUICK_ACTIONS,
   DEFAULT_QUICK_ACTIONS,
 } from '../../types/geodeActions';
-import { GEODE_STATES, GEODE_CHAPTER_TYPES } from '../../types/geode';
+import { GEODE_STATES, getChapterTypeInfo } from '../../types/geode';
+import { useGeodeChapterStore } from '../../store/geodeChapterStore';
 
 // ============================================
 // ICON MAPPING
@@ -83,11 +84,12 @@ interface ActionFormProps {
 }
 
 function ActionForm({ template, chapter, onSubmit, onCancel, isSubmitting }: ActionFormProps) {
+  const customChapterTypes = useGeodeChapterStore(s => s.customChapterTypes);
   const [params, setParams] = useState<Record<string, string>>(() => {
     // Initialize with default values and chapter context
     const initial: Record<string, string> = {};
     const stateInfo = GEODE_STATES.find(s => s.value === chapter.reportState);
-    const chapterType = GEODE_CHAPTER_TYPES.find(c => c.value === chapter.chapterType);
+    const chapterType = getChapterTypeInfo(chapter.chapterType, customChapterTypes);
 
     // Pre-fill context values
     initial['stateName'] = stateInfo?.label || '';

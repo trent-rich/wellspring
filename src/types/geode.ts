@@ -19,21 +19,18 @@ export type GeodeReportStatus =
   | 'final_review'
   | 'published';
 
-// Chapter types - based on Arizona report structure
-export type GeodeContentSection =
-  | 'ch1_101'              // The 101 (intro/overview)
-  | 'ch2_subsurface'       // Subsurface
-  | 'ch3_electricity'      // Electricity
-  | 'ch4_direct_use'       // Direct Use
-  | 'ch4_5_commercial_gshp' // RMI Commercial GSHP (AZ-specific?)
-  | 'ch5_heat_ownership'   // Heat Ownership
-  | 'ch6_policy'           // Policy
-  | 'ch7_stakeholders'     // Stakeholders
-  | 'ch7_1_entrepreneurship' // Entrepreneurship (OK-specific)
-  | 'ch8_environment'      // Environment
-  | 'ch9_military'         // Military Installations (may vary by state)
-  | 'executive_summary'    // Executive Summary (if separate)
-  | 'recommendations';     // Recommendations (if separate)
+// Chapter type identifier. Built-in values include 'ch1_101', 'ch2_subsurface', etc.
+// Custom chapters use user-defined slugs like 'ch10_workforce_development'.
+export type GeodeContentSection = string;
+
+// Metadata for a chapter type (both built-in and custom)
+export interface ChapterTypeDefinition {
+  value: string;              // slug/key, e.g. 'ch10_workforce_development'
+  label: string;              // display name, e.g. 'Workforce Development'
+  chapterNum: string;         // display number, e.g. '10'
+  isCustom?: boolean;         // true if user-created (not in GEODE_CHAPTER_TYPES)
+  contractScopeText?: string; // optional custom scope text for contracts
+}
 
 export type GeodeStakeholderRole =
   | 'content_owner'
@@ -644,9 +641,10 @@ export const GEODE_STATES: { value: GeodeState; label: string; abbreviation: str
 export const GEODE_FINAL_DEADLINE = new Date('2026-04-30');
 
 // Chapter types based on Arizona report structure
-// Master list of ALL possible chapter types across all states.
+// Master list of ALL built-in chapter types across all states.
 // Not every state uses every chapter — see DEFAULT_STATE_CHAPTERS for per-state config.
-export const GEODE_CHAPTER_TYPES: { value: GeodeContentSection; label: string; chapterNum: string }[] = [
+// Custom chapter types are stored in geodeChapterStore and merged at runtime.
+export const GEODE_CHAPTER_TYPES: ChapterTypeDefinition[] = [
   { value: 'ch1_101', label: 'The 101', chapterNum: '1' },
   { value: 'ch2_subsurface', label: 'Subsurface', chapterNum: '2' },
   { value: 'ch3_electricity', label: 'Electricity', chapterNum: '3' },
@@ -659,6 +657,20 @@ export const GEODE_CHAPTER_TYPES: { value: GeodeContentSection; label: string; c
   { value: 'ch8_environment', label: 'Environment', chapterNum: '8' },
   { value: 'ch9_military', label: 'Military Installations', chapterNum: '9' },
 ];
+
+// Merge built-in + custom chapter types into a single list
+export function getAllChapterTypes(customChapterTypes: ChapterTypeDefinition[] = []): ChapterTypeDefinition[] {
+  return [...GEODE_CHAPTER_TYPES, ...customChapterTypes];
+}
+
+// Look up chapter metadata across both built-in and custom types
+export function getChapterTypeInfo(
+  chapterTypeValue: string,
+  customChapterTypes: ChapterTypeDefinition[] = []
+): ChapterTypeDefinition | undefined {
+  return GEODE_CHAPTER_TYPES.find(c => c.value === chapterTypeValue)
+    || customChapterTypes.find(c => c.value === chapterTypeValue);
+}
 
 // Default chapter list per state. States can add/remove chapters via the store.
 // This defines the initial set — the store persists any modifications.

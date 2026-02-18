@@ -6,7 +6,7 @@ import { useUserStateStore } from '../store/userStateStore';
 import { useSequencingStore } from '../store/sequencingStore';
 import { useGeodeChapterStore } from '../store/geodeChapterStore';
 import type { VoiceCommand, TaskWithRelations } from '../types';
-import { GEODE_CHAPTER_TYPES, GEODE_STATES } from '../types/geode';
+import { GEODE_STATES, getChapterTypeInfo } from '../types/geode';
 import { getStepMeta, calculateWorkflowProgress } from '../types/geodeWorkflow';
 import { cn, parseTaskId } from '../lib/utils';
 import { aiChat } from '../lib/edgeFunctions';
@@ -81,7 +81,7 @@ function buildAppContext(extraContext?: string): string {
     if (chapters.length === 0) continue;
 
     const chapterSummaries = chapters.map((ch) => {
-      const chapterInfo = GEODE_CHAPTER_TYPES.find((c) => c.value === ch.chapterType);
+      const chapterInfo = getChapterTypeInfo(ch.chapterType, geodeChapterStore.customChapterTypes);
       const label = chapterInfo ? `Ch ${chapterInfo.chapterNum} ${chapterInfo.label}` : ch.chapterType;
       const stepMeta = getStepMeta(ch.workflowType, ch.currentStep);
       const stepLabel = stepMeta?.shortLabel || ch.currentStep;

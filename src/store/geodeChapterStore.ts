@@ -7,7 +7,7 @@ import {
   getStepMeta,
   calculateDaysOnStep,
 } from '../types/geodeWorkflow';
-import { GEODE_CHAPTER_TYPES, GEODE_STATES, GEODE_CHAPTER_LEADS, DEFAULT_STATE_CHAPTERS, type GeodeContentSection } from '../types/geode';
+import { GEODE_CHAPTER_TYPES, GEODE_STATES, GEODE_CHAPTER_LEADS, DEFAULT_STATE_CHAPTERS, type GeodeContentSection, type ChapterTypeDefinition, getAllChapterTypes, getChapterTypeInfo } from '../types/geode';
 import { addMondayComment, getMondayStatusLabel } from '../lib/geodeMondaySync';
 import {
   syncChapterToPaymentsWithEmail,
@@ -28,6 +28,9 @@ interface GeodeChapterStoreState {
 
   // Per-state chapter lists (which chapters are enabled for each state)
   stateChapters: Record<GeodeState, GeodeContentSection[]>;
+
+  // Custom chapter type definitions (user-created, persisted)
+  customChapterTypes: ChapterTypeDefinition[];
 
   // Editable DOE deadlines (admin only)
   doeDeadlines: Record<GeodeState, string>;
@@ -73,6 +76,10 @@ interface GeodeChapterStoreState {
   addChapterToState: (state: GeodeState, chapterType: GeodeContentSection) => void;
   removeChapterFromState: (state: GeodeState, chapterType: GeodeContentSection) => void;
   getStateChapterTypes: (state: GeodeState) => GeodeContentSection[];
+
+  // Custom chapter type management
+  addCustomChapterType: (def: ChapterTypeDefinition) => void;
+  removeCustomChapterType: (value: string) => void;
 
   // Queries
   getChaptersForState: (state: GeodeState) => ChapterWorkflowState[];
@@ -328,6 +335,7 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
     (set, get) => ({
       chapters: {},
       stateChapters: { ...DEFAULT_STATE_CHAPTERS },
+      customChapterTypes: [],
       doeDeadlines: DEFAULT_DOE_DEADLINES,
       mondayItemIds: {},
       paymentContributorIds: {},
@@ -415,7 +423,7 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
           return { triggered: false, email: null };
         }
 
-        const chapterInfo = GEODE_CHAPTER_TYPES.find(c => c.value === chapterType);
+        const chapterInfo = getChapterTypeInfo(chapterType, get().customChapterTypes);
         const chapterTitle = chapterInfo?.label || chapterType;
         const stateInfo = GEODE_STATES.find(s => s.value === state);
 
@@ -519,7 +527,7 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
         // If so, generate a prefilled invoice and create a Gmail draft
         const { sendInvoiceReminder } = shouldSendPaymentEmail(completedStep);
         if (sendInvoiceReminder && chapter.authorEmail && chapter.authorName) {
-          const chapterInfo = GEODE_CHAPTER_TYPES.find(c => c.value === chapterType);
+          const chapterInfo = getChapterTypeInfo(chapterType, get().customChapterTypes);
           const stateInfo = GEODE_STATES.find(s => s.value === state);
 
           const authorInfo = {
@@ -648,7 +656,8 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
         for (const state of GEODE_STATES) {
           // Use per-state chapter list (falls back to default if not yet set)
           const enabledChapters = currentStateChapters[state.value as GeodeState] || DEFAULT_STATE_CHAPTERS[state.value as GeodeState];
-          const chapterTypes = GEODE_CHAPTER_TYPES.filter(c => enabledChapters.includes(c.value));
+          const allTypes = getAllChapterTypes(get().customChapterTypes);
+          const chapterTypes = allTypes.filter(c => enabledChapters.includes(c.value));
 
           for (const chapter of chapterTypes) {
             const key = `${state.value}_${chapter.value}`;
@@ -674,10 +683,15 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
         const current = get().stateChapters[state] || DEFAULT_STATE_CHAPTERS[state];
         if (current.includes(chapterType)) return; // Already exists
 
-        // Insert in chapter number order based on GEODE_CHAPTER_TYPES
-        const masterOrder = GEODE_CHAPTER_TYPES.map(c => c.value);
+        // Insert in chapter number order based on merged chapter list (built-in + custom)
+        const allTypes = getAllChapterTypes(get().customChapterTypes);
+        const masterOrder = allTypes.map(c => c.value);
         const updated = [...current, chapterType].sort(
-          (a, b) => masterOrder.indexOf(a) - masterOrder.indexOf(b)
+          (a, b) => {
+            const aIdx = masterOrder.indexOf(a);
+            const bIdx = masterOrder.indexOf(b);
+            return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+          }
         );
 
         // Create the chapter workflow state entry
@@ -708,6 +722,38 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
 
       getStateChapterTypes: (state) => {
         return get().stateChapters[state] || DEFAULT_STATE_CHAPTERS[state];
+      },
+
+      addCustomChapterType: (def) => {
+        const existing = getAllChapterTypes(get().customChapterTypes);
+        if (existing.some(c => c.value === def.value)) return; // Duplicate slug
+        set((s) => ({
+          customChapterTypes: [...s.customChapterTypes, { ...def, isCustom: true }],
+        }));
+      },
+
+      removeCustomChapterType: (value) => {
+        // Only remove custom types (not built-in)
+        if (GEODE_CHAPTER_TYPES.some(c => c.value === value)) return;
+
+        // Also remove from all state chapter lists and chapter data
+        const newStateChapters = { ...get().stateChapters };
+        const newChapters = { ...get().chapters };
+        for (const state of GEODE_STATES) {
+          const stateKey = state.value as GeodeState;
+          const current = newStateChapters[stateKey] || DEFAULT_STATE_CHAPTERS[stateKey];
+          if (current.includes(value)) {
+            newStateChapters[stateKey] = current.filter(c => c !== value);
+          }
+          const chapterKey = `${stateKey}_${value}`;
+          delete newChapters[chapterKey];
+        }
+
+        set((s) => ({
+          customChapterTypes: s.customChapterTypes.filter(c => c.value !== value),
+          stateChapters: newStateChapters,
+          chapters: newChapters,
+        }));
       },
 
       getChaptersForState: (state) => {
@@ -746,13 +792,46 @@ export const useGeodeChapterStore = create<GeodeChapterStoreState>()(
     }),
     {
       name: 'geode-chapter-store',
-      // Persist chapters, deadlines, and Monday.com item IDs
+      // Persist chapters, deadlines, Monday.com item IDs, per-state chapter lists, and custom types
       partialize: (state) => ({
         chapters: state.chapters,
+        stateChapters: state.stateChapters,
+        customChapterTypes: state.customChapterTypes,
         doeDeadlines: state.doeDeadlines,
         mondayItemIds: state.mondayItemIds,
         paymentContributorIds: state.paymentContributorIds,
       }),
+      // On rehydration, sync any missing chapter entries from defaults
+      // This fixes the bug where DEFAULT_STATE_CHAPTERS changes (e.g. adding OK ch7.1)
+      // but existing persisted chapters record doesn't have the new entries
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        const { chapters, stateChapters } = state;
+        let needsUpdate = false;
+        const updatedChapters = { ...chapters };
+
+        // For each state, check if any enabled chapters are missing from the chapters record
+        for (const geodeState of GEODE_STATES) {
+          const stateKey = geodeState.value as GeodeState;
+          const enabledChapters = stateChapters[stateKey] || DEFAULT_STATE_CHAPTERS[stateKey];
+
+          for (const chapterType of enabledChapters) {
+            const key = `${stateKey}_${chapterType}`;
+            if (!updatedChapters[key]) {
+              // Missing chapter — create it
+              updatedChapters[key] = createInitialChapterState(stateKey, chapterType);
+              needsUpdate = true;
+            }
+          }
+        }
+
+        if (needsUpdate) {
+          // Use setTimeout to defer the set call after hydration completes
+          setTimeout(() => {
+            useGeodeChapterStore.setState({ chapters: updatedChapters });
+          }, 0);
+        }
+      },
     }
   )
 );

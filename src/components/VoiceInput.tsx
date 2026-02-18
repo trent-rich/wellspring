@@ -5,7 +5,8 @@ import { useTaskStore } from '../store/taskStore';
 import { useUserStateStore } from '../store/userStateStore';
 import { useGeodeEmailStore } from '../store/geodeEmailStore';
 import { generateVoiceResponse } from '../lib/aiService';
-import { GEODE_STATES, GEODE_CHAPTER_TYPES } from '../types/geode';
+import { GEODE_STATES, getAllChapterTypes, getChapterTypeInfo } from '../types/geode';
+import { useGeodeChapterStore } from '../store/geodeChapterStore';
 import { AUTHOR_AGREEMENT_ACTIONS } from '../types/geodeEmailEvents';
 import type { GeodeState, GeodeContentSection } from '../types/geode';
 import type { VoiceCommand, TaskWithRelations } from '../types';
@@ -75,6 +76,8 @@ export default function VoiceInput({ onClose }: VoiceInputProps) {
   const { fetchTaskByShortId, completeTask, snoozeTask, createTask } = useTaskStore();
   const { enterFocusMode, exitProtectedState } = useUserStateStore();
   const { getPendingTasks, confirmTask, addEmailEvent } = useGeodeEmailStore();
+  const customChapterTypes = useGeodeChapterStore(s => s.customChapterTypes);
+  const allChapterTypes = getAllChapterTypes(customChapterTypes);
   const [pendingAction, setPendingAction] = useState<VoiceCommand | null>(null);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
 
@@ -720,7 +723,7 @@ export default function VoiceInput({ onClose }: VoiceInputProps) {
   const handleChapterSelect = (chapterType: GeodeContentSection) => {
     setGeodeContext(prev => ({ ...prev, chapterType }));
     setClarificationMode('author');
-    setAiResponse(`Chapter: ${GEODE_CHAPTER_TYPES.find(c => c.value === chapterType)?.label}. Enter author name (or skip):`);
+    setAiResponse(`Chapter: ${getChapterTypeInfo(chapterType, customChapterTypes)?.label}. Enter author name (or skip):`);
   };
 
   const handleAuthorInput = (authorName: string) => {
@@ -777,7 +780,7 @@ export default function VoiceInput({ onClose }: VoiceInputProps) {
       // Also complete the original task
       await completeTask(pendingGeodeTask.id);
 
-      setAiResponse(`✓ Executed GEODE workflow for ${pendingGeodeTask.short_id}: ${context.state ? GEODE_STATES.find(s => s.value === context.state)?.abbreviation : ''} ${context.chapterType ? GEODE_CHAPTER_TYPES.find(c => c.value === context.chapterType)?.label : ''}`);
+      setAiResponse(`✓ Executed GEODE workflow for ${pendingGeodeTask.short_id}: ${context.state ? GEODE_STATES.find(s => s.value === context.state)?.abbreviation : ''} ${context.chapterType ? getChapterTypeInfo(context.chapterType, customChapterTypes)?.label : ''}`);
     } catch (err) {
       console.error('GEODE workflow execution error:', err);
       setError('Failed to execute GEODE workflow');
@@ -1060,7 +1063,7 @@ export default function VoiceInput({ onClose }: VoiceInputProps) {
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700">Select Chapter Type:</p>
                   <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
-                    {GEODE_CHAPTER_TYPES.map(chapter => (
+                    {allChapterTypes.map(chapter => (
                       <button
                         key={chapter.value}
                         onClick={() => handleChapterSelect(chapter.value)}

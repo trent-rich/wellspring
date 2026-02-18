@@ -19,7 +19,8 @@ import { useState } from 'react';
 import { cn } from '../../lib/utils';
 import type { GeodeConfirmationTask } from '../../types/geodeEmailEvents';
 import { useGeodeEmailStore } from '../../store/geodeEmailStore';
-import { GEODE_STATES, GEODE_CHAPTER_TYPES } from '../../types/geode';
+import { GEODE_STATES, getChapterTypeInfo } from '../../types/geode';
+import { useGeodeChapterStore } from '../../store/geodeChapterStore';
 
 // ============================================
 // TYPES
@@ -86,11 +87,12 @@ export default function EmailConfirmationCard({ task, compact = false }: EmailCo
     hasDraft: boolean;
   } | null>(null);
   const { confirmTask, dismissTask } = useGeodeEmailStore();
+  const customChapterTypes = useGeodeChapterStore(s => s.customChapterTypes);
 
   const Icon = getCategoryIcon(task.category);
   const stateInfo = task.state ? GEODE_STATES.find((s) => s.value === task.state) : null;
   const chapterInfo = task.chapterType
-    ? GEODE_CHAPTER_TYPES.find((c) => c.value === task.chapterType)
+    ? getChapterTypeInfo(task.chapterType, customChapterTypes)
     : null;
 
   const handleConfirm = async () => {

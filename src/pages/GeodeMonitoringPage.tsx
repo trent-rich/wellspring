@@ -23,8 +23,10 @@ import { useGeodeChapterStore, useTrentChapters, useOverdueChapters } from '../s
 import type { GeodeState } from '../types/geode';
 import {
   GEODE_STATES,
-  GEODE_CHAPTER_TYPES,
   GEODE_GOOGLE_DRIVE_FOLDER,
+  getAllChapterTypes,
+  getChapterTypeInfo,
+  type ChapterTypeDefinition,
 } from '../types/geode';
 import {
   getStepMeta,
@@ -82,7 +84,8 @@ interface ChapterRowProps {
 }
 
 function ChapterRow({ chapter, onClick }: ChapterRowProps) {
-  const chapterType = GEODE_CHAPTER_TYPES.find(c => c.value === chapter.chapterType);
+  const customChapterTypes = useGeodeChapterStore(s => s.customChapterTypes);
+  const chapterType = getChapterTypeInfo(chapter.chapterType, customChapterTypes);
   const stepMeta = getStepMeta(chapter.workflowType, chapter.currentStep);
   const progress = calculateWorkflowProgress(chapter.workflowType, chapter.currentStep);
   const daysOnStep = calculateDaysOnStep(chapter.currentStepStartedAt);
@@ -186,6 +189,7 @@ interface MyGeodeTasksProps {
 
 function MyGeodeTasks({ trentChapters }: MyGeodeTasksProps) {
   const navigate = useNavigate();
+  const customChapterTypes = useGeodeChapterStore(s => s.customChapterTypes);
 
   if (trentChapters.length === 0) {
     return (
@@ -200,7 +204,7 @@ function MyGeodeTasks({ trentChapters }: MyGeodeTasksProps) {
     <div className="space-y-2">
       {trentChapters.slice(0, 6).map((chapter) => {
         const stateInfo = GEODE_STATES.find(s => s.value === chapter.reportState);
-        const chapterType = GEODE_CHAPTER_TYPES.find(c => c.value === chapter.chapterType);
+        const chapterType = getChapterTypeInfo(chapter.chapterType, customChapterTypes);
         const daysOnStep = calculateDaysOnStep(chapter.currentStepStartedAt);
         const stepMeta = getStepMeta(chapter.workflowType, chapter.currentStep);
         const overdue = stepMeta ? isStepOverdue(chapter.currentStepStartedAt, stepMeta.typicalDurationDays) : false;
@@ -302,17 +306,28 @@ export default function GeodeMonitoringPage() {
   const [activeState, setActiveState] = useState<GeodeState>('arizona');
   const [selectedChapter, setSelectedChapter] = useState<ChapterWorkflowState | null>(null);
   const [showManageChapters, setShowManageChapters] = useState(false);
+  const [showCreateChapter, setShowCreateChapter] = useState(false);
+  const [newChapterNum, setNewChapterNum] = useState('');
+  const [newChapterLabel, setNewChapterLabel] = useState('');
+  const [newChapterSlug, setNewChapterSlug] = useState('');
+  const [newChapterScope, setNewChapterScope] = useState('');
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
   const {
     chapters,
     doeDeadlines,
+    customChapterTypes,
     getChaptersForState,
     setDoeDeadline,
     initializeChapters,
     addChapterToState,
     removeChapterFromState,
     getStateChapterTypes,
+    addCustomChapterType,
+    removeCustomChapterType,
   } = useGeodeChapterStore();
+
+  const allChapterTypes = getAllChapterTypes(customChapterTypes);
 
   const trentChapters = useTrentChapters();
   const overdueChapters = useOverdueChapters();
@@ -385,7 +400,7 @@ export default function GeodeMonitoringPage() {
           <div className="mt-2 flex flex-wrap gap-2">
             {overdueChapters.slice(0, 5).map(ch => {
               const stateInfo = GEODE_STATES.find(s => s.value === ch.reportState);
-              const chapterType = GEODE_CHAPTER_TYPES.find(c => c.value === ch.chapterType);
+              const chapterType = getChapterTypeInfo(ch.chapterType, customChapterTypes);
               return (
                 <button
                   key={ch.chapterId}
@@ -530,7 +545,7 @@ export default function GeodeMonitoringPage() {
                   </h4>
                 </div>
                 <div className="space-y-1">
-                  {GEODE_CHAPTER_TYPES.map(chType => {
+                  {allChapterTypes.map(chType => {
                     const enabledList = getStateChapterTypes(activeState);
                     const isEnabled = enabledList.includes(chType.value);
                     return (
@@ -548,32 +563,176 @@ export default function GeodeMonitoringPage() {
                           <span className={isEnabled ? 'text-gray-900' : 'text-gray-500'}>
                             {chType.label}
                           </span>
+                          {chType.isCustom && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-indigo-200 text-indigo-700 rounded-full">Custom</span>
+                          )}
                         </div>
-                        {isEnabled ? (
-                          <button
-                            onClick={() => {
-                              if (confirm(`Remove Ch ${chType.chapterNum}: ${chType.label} from ${GEODE_STATES.find(s => s.value === activeState)?.label}?`)) {
-                                removeChapterFromState(activeState, chType.value);
-                              }
-                            }}
-                            className="flex items-center space-x-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                            <span>Remove</span>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => addChapterToState(activeState, chType.value)}
-                            className="flex items-center space-x-1 px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-100 rounded transition-colors"
-                          >
-                            <Plus className="w-3 h-3" />
-                            <span>Add</span>
-                          </button>
-                        )}
+                        <div className="flex items-center space-x-1">
+                          {isEnabled ? (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Remove Ch ${chType.chapterNum}: ${chType.label} from ${GEODE_STATES.find(s => s.value === activeState)?.label}?`)) {
+                                  removeChapterFromState(activeState, chType.value);
+                                }
+                              }}
+                              className="flex items-center space-x-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>Remove</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => addChapterToState(activeState, chType.value)}
+                              className="flex items-center space-x-1 px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-100 rounded transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <span>Add</span>
+                            </button>
+                          )}
+                          {chType.isCustom && (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Delete custom chapter type "${chType.label}"? This removes it from all states.`)) {
+                                  removeCustomChapterType(chType.value);
+                                }
+                              }}
+                              className="px-2 py-1 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                              title="Delete this custom chapter type"
+                            >
+                              Delete Type
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
                 </div>
+
+                {/* Create New Chapter Type */}
+                {!showCreateChapter ? (
+                  <button
+                    onClick={() => setShowCreateChapter(true)}
+                    className="flex items-center space-x-1 mt-3 px-3 py-2 text-xs font-medium text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors w-full justify-center border border-dashed border-indigo-300"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Create New Chapter Type</span>
+                  </button>
+                ) : (
+                  <div className="mt-3 bg-white border border-indigo-200 rounded-lg p-3 space-y-3">
+                    <h5 className="text-sm font-medium text-indigo-800">New Chapter Type</h5>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">Chapter Number *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 10, 4.2"
+                          value={newChapterNum}
+                          onChange={(e) => {
+                            setNewChapterNum(e.target.value);
+                            if (!slugManuallyEdited && newChapterLabel) {
+                              const cleanNum = e.target.value.replace(/\./g, '_');
+                              const cleanLabel = newChapterLabel.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+                              setNewChapterSlug(`ch${cleanNum}_${cleanLabel}`);
+                            }
+                          }}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">Label *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Workforce Development"
+                          value={newChapterLabel}
+                          onChange={(e) => {
+                            setNewChapterLabel(e.target.value);
+                            if (!slugManuallyEdited && newChapterNum) {
+                              const cleanNum = newChapterNum.replace(/\./g, '_');
+                              const cleanLabel = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+                              setNewChapterSlug(`ch${cleanNum}_${cleanLabel}`);
+                            }
+                          }}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">Slug (auto-generated, editable)</label>
+                      <input
+                        type="text"
+                        value={newChapterSlug}
+                        onChange={(e) => {
+                          setNewChapterSlug(e.target.value);
+                          setSlugManuallyEdited(true);
+                        }}
+                        className="w-full px-2 py-1.5 text-sm font-mono border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="ch10_workforce_development"
+                      />
+                      {newChapterSlug && allChapterTypes.some(c => c.value === newChapterSlug) && (
+                        <p className="text-xs text-red-500 mt-1">This slug already exists.</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">Contract Scope Text (optional)</label>
+                      <textarea
+                        value={newChapterScope}
+                        onChange={(e) => setNewChapterScope(e.target.value)}
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                        rows={2}
+                        placeholder="Description for contract generation..."
+                      />
+                    </div>
+                    <div className="flex items-center justify-end space-x-2">
+                      <button
+                        onClick={() => {
+                          setShowCreateChapter(false);
+                          setNewChapterNum('');
+                          setNewChapterLabel('');
+                          setNewChapterSlug('');
+                          setNewChapterScope('');
+                          setSlugManuallyEdited(false);
+                        }}
+                        className="px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!newChapterNum || !newChapterLabel || !newChapterSlug) return;
+                          if (allChapterTypes.some(c => c.value === newChapterSlug)) return;
+                          const def: ChapterTypeDefinition = {
+                            value: newChapterSlug,
+                            label: newChapterLabel,
+                            chapterNum: newChapterNum,
+                            isCustom: true,
+                            contractScopeText: newChapterScope || undefined,
+                          };
+                          addCustomChapterType(def);
+                          // Auto-add to current state
+                          addChapterToState(activeState, newChapterSlug);
+                          // Reset form
+                          setShowCreateChapter(false);
+                          setNewChapterNum('');
+                          setNewChapterLabel('');
+                          setNewChapterSlug('');
+                          setNewChapterScope('');
+                          setSlugManuallyEdited(false);
+                        }}
+                        disabled={!newChapterNum || !newChapterLabel || !newChapterSlug || allChapterTypes.some(c => c.value === newChapterSlug)}
+                        className={cn(
+                          'flex items-center space-x-1 px-3 py-1.5 text-xs font-medium rounded transition-colors',
+                          (!newChapterNum || !newChapterLabel || !newChapterSlug || allChapterTypes.some(c => c.value === newChapterSlug))
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        )}
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Create & Add to {GEODE_STATES.find(s => s.value === activeState)?.abbreviation}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-xs text-indigo-400 mt-3">
                   Changes are saved automatically and persist across sessions.
                 </p>

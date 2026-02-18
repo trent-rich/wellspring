@@ -16,7 +16,8 @@ import {
   AlignmentType,
   PageBreak,
 } from 'docx';
-import { GEODE_STATES, GEODE_DOE_DEADLINES, type GeodeState } from '../types/geode';
+import { GEODE_STATES, GEODE_DOE_DEADLINES, type GeodeState, getChapterTypeInfo } from '../types/geode';
+import { useGeodeChapterStore } from '../store/geodeChapterStore';
 import { getGoogleTokenAsync } from './googleCalendar';
 
 // ============================================
@@ -236,6 +237,12 @@ function getChapterScopeText(chapterType: string, stateName: string): string {
   const generator = CHAPTER_SCOPE_DEFAULTS[chapterType];
   if (generator) {
     return generator(stateName);
+  }
+  // Check if custom chapter type has scope text defined
+  const customTypes = useGeodeChapterStore.getState().customChapterTypes;
+  const customInfo = getChapterTypeInfo(chapterType, customTypes);
+  if (customInfo?.contractScopeText) {
+    return customInfo.contractScopeText;
   }
   return `This chapter covers ${chapterType.replace('ch', 'Chapter ').replace('_', ' ')} for the ${stateName} state geothermal data report.`;
 }

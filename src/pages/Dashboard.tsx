@@ -21,7 +21,7 @@ import { useTodayEvents } from '../store/calendarStore';
 import { useUserStateStore } from '../store/userStateStore';
 import { useGeodeChapterStore, useTrentChapters, useOverdueChapters } from '../store/geodeChapterStore';
 import { useHighPriorityEmailTasks } from '../store/geodeEmailStore';
-import { GEODE_STATES, GEODE_CHAPTER_TYPES } from '../types/geode';
+import { GEODE_STATES, getChapterTypeInfo } from '../types/geode';
 import type { GeodeState } from '../types/geode';
 import { getStepMeta, calculateDaysOnStep, isStepOverdue } from '../types/geodeWorkflow';
 import type { KPIData } from '../types';
@@ -45,7 +45,7 @@ export default function Dashboard() {
   const readyIdeas = useReadyToExecuteIdeas();
 
   // GEODE chapter store
-  const { chapters, doeDeadlines, initializeChapters } = useGeodeChapterStore();
+  const { chapters, doeDeadlines, customChapterTypes, initializeChapters } = useGeodeChapterStore();
   const trentChapters = useTrentChapters();
   const overdueGeodeChapters = useOverdueChapters();
 
@@ -205,7 +205,7 @@ export default function Dashboard() {
               {/* GEODE Chapters with Trent as owner (high priority) */}
               {trentChapters.slice(0, 4).map((chapter) => {
                 const stateInfo = GEODE_STATES.find(s => s.value === chapter.reportState);
-                const chapterType = GEODE_CHAPTER_TYPES.find(c => c.value === chapter.chapterType);
+                const chapterType = getChapterTypeInfo(chapter.chapterType, customChapterTypes);
                 const stepMeta = getStepMeta(chapter.workflowType, chapter.currentStep);
                 const daysOnStep = calculateDaysOnStep(chapter.currentStepStartedAt);
                 const overdue = stepMeta ? isStepOverdue(chapter.currentStepStartedAt, stepMeta.typicalDurationDays) : false;
