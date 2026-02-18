@@ -227,7 +227,7 @@ Email: ${params.authorEmail}
 Chapter: ${chapterNum} - ${chapterTitle}
 Report: ${stateName} State Geothermal Data Report
 
-Once it's signed and returned, please save the executed agreement to the Admin Google Share drive in the Contractor folder and let me know so we can proceed with onboarding.
+Once it's signed and returned, please let Drew and I know so we can proceed with onboarding.
 
 Thanks,
 Trent`;
