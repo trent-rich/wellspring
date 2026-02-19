@@ -76,14 +76,15 @@ export default function AdminPage() {
     console.log('[AdminPage] Inviting user:', inviteEmail.trim(), 'with role:', inviteRole);
 
     try {
-      // Get current user's JWT for Edge Function auth
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error('[AdminPage] getSession error:', sessionError);
+      // Refresh session to get a fresh JWT for Edge Function auth
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('[AdminPage] refreshSession error:', refreshError);
+        // Fall back to getSession if refresh fails
       }
-      const accessToken = sessionData?.session?.access_token;
+      const accessToken = refreshData?.session?.access_token;
       if (!accessToken) {
-        console.error('[AdminPage] No access token available');
+        console.error('[AdminPage] No access token available after refresh');
         setError('Not authenticated. Please sign in again.');
         setInviting(false);
         return;
