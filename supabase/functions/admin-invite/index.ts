@@ -51,19 +51,22 @@ serve(async (req) => {
       return errorResponse('Authorization required', 401);
     }
 
-    // Create anon client to verify the caller's identity
-    const anonClient = createClient(supabaseUrl, supabaseAnonKey || '', {
+    // Extract the token from "Bearer <token>"
+    const token = authHeader.replace('Bearer ', '');
+
+    // Create admin client to verify the caller's JWT
+    const adminVerifyClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
-      global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: { user: caller }, error: authError } = await anonClient.auth.getUser();
+    const { data: { user: caller }, error: authError } = await adminVerifyClient.auth.getUser(token);
     if (authError || !caller) {
-      return errorResponse('Invalid or expired token', 401);
+      console.error('JWT verification failed:', authError?.message);
+      return errorResponse(`Invalid or expired token: ${authError?.message || 'unknown'}`, 401);
     }
 
-    // Check if caller has admin role
-    const { data: callerProfile } = await anonClient
+    // Check if caller has admin role (use admin client to bypass RLS)
+    const { data: callerProfile } = await adminVerifyClient
       .from('users')
       .select('role')
       .eq('id', caller.id)
